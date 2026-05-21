@@ -1,40 +1,32 @@
 .PHONY: all clean
 
-WARNINGS = -Wall -Wextra -Wconversion -Wimplicit-int-float-conversion
-INCLUDES = -Iinclude
-LIBRARIES = -lraylib
-STANDARD = -std=c23
-DEBUG = -g
-OPTIMIZATIONS = -Og
+CC := clang
+DEBUG := -g
+WARNINGS := -Wall -Wextra -Wconversion -Wimplicit-int-float-conversion
+WARNINGS += -Wpedantic -Wshadow -Wstrict-prototypes -Wdouble-promotion
+INCLUDES := -Iinclude
+STANDARD := -std=c23
+DEPENDENCIES := -MMD -MP
+OPTIMIZATIONS := -Og
+CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES)
 
-BINARIES = build/main
-OBJECTS = build/map.o build/window.o build/relative.o build/input.o build/draw.o
+LDLIBS := -lraylib
+LDFLAGS := -fuse-ld=lld
 
-all: $(BINARIES) $(OBJECTS)
+BINARIES := build/vmvis
+OBJECTS := $(patsubst src/%.c,build/%.o,$(wildcard src/*.c))
+
+all: $(BINARIES)
 
 clean:
-	-rm -rf build 2>/dev/null
+	rm -rf build
 
-build/map.o: src/map.c
+build/%.o: src/%.c
 	mkdir -p $(@D)
-	clang $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/window.o: src/window.c
+build/vmvis: $(OBJECTS)
 	mkdir -p $(@D)
-	clang $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) -c -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-build/relative.o: src/relative.c
-	mkdir -p $(@D)
-	clang $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) -c -o $@ $^
-
-build/input.o: src/input.c
-	mkdir -p $(@D)
-	clang $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) -c -o $@ $^
-
-build/draw.o: src/draw.c
-	mkdir -p $(@D)
-	clang $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) -c -o $@ $^
-
-build/main: src/main.c $(OBJECTS)
-	mkdir -p $(@D)
-	clang $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) -o $@ $^ $(LIBRARIES)
+-include $(OBJECTS:.o=.d)
