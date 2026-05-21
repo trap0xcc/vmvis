@@ -63,6 +63,29 @@ void draw_grid_debug() {
   }
 }
 
+static Vector2 _bottom_right;
+
+void write_visibility_state() {
+  _bottom_right = (Vector2){
+      (float)GetScreenWidth(),
+      (float)GetScreenHeight(),
+  };
+}
+
+bool visible_vec_raw(Vector2 vec) {
+  return vec.x > 0 && vec.y > 0 && vec.x < _bottom_right.x &&
+         vec.y < _bottom_right.y;
+}
+
+bool visible_rect(Rectangle rect) {
+  rect = relative_rect(rect);
+
+  auto vec_a = (Vector2){rect.x, rect.y};
+  auto vec_b = (Vector2){rect.x + rect.width, rect.y + rect.height};
+
+  return visible_vec_raw(vec_a) || visible_vec_raw(vec_b);
+}
+
 void draw_map(map_t *map) {
   auto size = 50ul;
   auto font_size = size / 8 * 5;
@@ -88,14 +111,22 @@ void draw_map(map_t *map) {
     auto x_pos = i % width_elements * offset + x_start + x_boost;
     auto y_pos = i / width_elements * offset + y_start;
 
-    Rectangle shadow_rec = {(float)(x_pos + 3), (float)(y_pos + 3), (float)size,
-                            (float)size};
-    draw_rect(shadow_rec, BLACK);
-
     Rectangle rec = {(float)x_pos, (float)y_pos, (float)size, (float)size};
+
+    if (!visible_rect(rec))
+      continue;
+
+    static const auto zoom_threshold = 0.1f;
+
+    if (get_zoom() >= zoom_threshold) {
+      Rectangle shadow_rec = {(float)(x_pos + 3), (float)(y_pos + 3),
+                              (float)size, (float)size};
+      draw_rect(shadow_rec, BLACK);
+    }
+
     draw_rect(rec, LIGHTGRAY);
 
-    if (get_zoom() < 0.45)
+    if (get_zoom() < zoom_threshold)
       continue;
 
     auto byte = map->start[i];
@@ -136,6 +167,8 @@ void draw_circle() { DrawCircle(100, 100, 50, WHITE); }
 void draw_loop(map_registry_t *reg) {
   while (!WindowShouldClose()) {
     BeginDrawing();
+
+    write_visibility_state();
 
     ClearBackground(DARKGRAY);
 

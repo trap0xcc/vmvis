@@ -12,7 +12,7 @@ int main() {
 
   map_registry_t reg = {};
 
-  uint8_t one_page[1 << 12] = {};
+  uint8_t one_page[1 << 20] = {};
   for (size_t i = 0; i < sizeof(one_page); i++)
     one_page[i] = (uint8_t)i;
   register_map(&reg, &(map_t){one_page, sizeof(one_page), 123, NULL});
