@@ -8,14 +8,14 @@ void handle_input_scroll() {
   static const auto zoom_factor = 0.1f;
 
   auto pos = GetMousePosition();
-  auto i_pos = inverse_relative_vec(pos);
+  auto i_pos = screen_vec_to_relative(pos);
 
   auto val = GetMouseWheelMove();
   if (val != 0) {
     auto direction = (val < 0) ? 1 - zoom_factor : 1 + zoom_factor;
     set_zoom(get_zoom() * direction);
 
-    auto new_pos = relative_vec(i_pos);
+    auto new_pos = relative_vec_to_screen(i_pos);
 
     auto origin = get_origin();
     set_origin((Vector2){

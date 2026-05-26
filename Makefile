@@ -7,7 +7,7 @@ WARNINGS += -Wpedantic -Wshadow -Wstrict-prototypes -Wdouble-promotion
 INCLUDES := -Iinclude
 STANDARD := -std=c23
 DEPENDENCIES := -MMD -MP
-OPTIMIZATIONS := -Og
+OPTIMIZATIONS := -O0
 CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES)
 
 LDLIBS := -lraylib
