@@ -4,15 +4,16 @@ CC := clang
 DEBUG := -g
 WARNINGS := -Wall -Wextra -Wconversion -Wimplicit-int-float-conversion
 WARNINGS += -Wpedantic -Wshadow -Wstrict-prototypes -Wdouble-promotion
-WARNINGS += -Werror
+WARNINGS += -Wreturn-stack-address -Werror
 INCLUDES := -Iinclude
 STANDARD := -std=c23
 DEPENDENCIES := -MMD -MP
 OPTIMIZATIONS := -O0
-CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES)
+SANS := -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
+CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES) $(SANS)
 
 LDLIBS := -lraylib
-LDFLAGS := -fuse-ld=lld
+LDFLAGS := -fuse-ld=lld $(SANS)
 
 BINARIES := build/vmvis
 OBJECTS := $(patsubst src/%.c,build/%.o,$(wildcard src/*.c))
