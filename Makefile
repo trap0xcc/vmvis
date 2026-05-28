@@ -35,19 +35,19 @@ clean:
 	rm -rf build
 
 run: clean build/vmvis
-	build/vmvis
+	build/vmvis $(ARGS)
 
 run.tsan: clean
 	SAN=tsan make build/vmvis
-	TSAN_OPTIONS="suppressions=tsan_ignore.txt" build/vmvis
+	TSAN_OPTIONS="suppressions=tsan_ignore.txt" build/vmvis $(ARGS)
 
 run.asan: clean
 	SAN=asan make build/vmvis
-	build/vmvis
+	build/vmvis $(ARGS)
 
 run.ubsan: clean
 	SAN=ubsan make build/vmvis
-	build/vmvis
+	build/vmvis $(ARGS)
 
 build/%.o: src/%.c
 	mkdir -p $(@D)
