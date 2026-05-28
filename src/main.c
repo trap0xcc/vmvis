@@ -3,43 +3,26 @@
 
 #include "raylib.h"
 
+#include "args.h"
 #include "draw.h"
 #include "map.h"
+#include "process.h"
 #include "window.h"
 
-uint8_t first_buf[1 << 20] = {};
-uint8_t second_buf[1 << 20] = {};
-uint8_t third_buf[1 << 20] = {};
+int main(int argc, char *argv[]) {
+  args_t args = {};
+  parse_args(argc, argv, &args);
 
-int main() {
   SetConfigFlags(FLAG_MSAA_4X_HINT);
 
   map_registry_t reg = {};
+  registry_init(&reg);
 
-  for (size_t i = 0; i < sizeof(first_buf); i++)
-    first_buf[i] = (uint8_t)i;
+  process_t proc = {};
+  process_init(&proc);
+  proc.pid = args.pid;
 
-  for (size_t i = 0; i < sizeof(second_buf); i++)
-    second_buf[i] = (uint8_t)i;
-
-  for (size_t i = 0; i < sizeof(third_buf); i++)
-    third_buf[i] = (uint8_t)i;
-
-  register_map(&reg, &(map_t){
-                         .buf = first_buf,
-                         .len = sizeof(first_buf),
-                         .remote_addr = 4096,
-                     });
-  register_map(&reg, &(map_t){
-                         .buf = second_buf,
-                         .len = sizeof(second_buf),
-                         .remote_addr = 2 << 20,
-                     });
-  register_map(&reg, &(map_t){
-                         .buf = third_buf,
-                         .len = sizeof(third_buf),
-                         .remote_addr = 3 << 20,
-                     });
+  start_map_monitor(&reg, &proc);
 
   create_window();
 

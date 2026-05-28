@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "raylib.h"
 
@@ -219,25 +220,24 @@ ul draw_spacer(ul y_cursor) {
 }
 
 void draw_maps(map_registry_t *reg) {
+  pthread_mutex_lock(&reg->mu);
+
   auto prev = (map_t *)NULL;
   auto curr = reg->first;
   auto cursor = 0ul;
 
-  if (curr->remote_addr != 0)
-    cursor = draw_spacer(cursor);
-
   while (curr != NULL) {
+    // diff prev addr with curr addr and draw a spacer
+    if (prev == NULL && curr->remote_addr != 0 ||
+        prev != NULL && (prev->remote_addr + prev->len) != curr->remote_addr)
+      cursor = draw_spacer(cursor);
+
     cursor = draw_map(curr, cursor);
     prev = curr;
     curr = curr->next;
-
-    if (curr == NULL)
-      continue;
-
-    // diff prev addr with curr addr and draw a spacer
-    if ((prev->remote_addr + prev->len) != curr->remote_addr)
-      cursor = draw_spacer(cursor);
   }
+
+  pthread_mutex_unlock(&reg->mu);
 }
 
 static inline double now_seconds(void) {
