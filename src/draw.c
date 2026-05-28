@@ -7,8 +7,10 @@
 
 #include "raylib.h"
 
+#include "active_page_notifier.h"
 #include "input.h"
 #include "map.h"
+#include "page_table.h"
 #include "relative.h"
 
 #define ul unsigned long
@@ -78,7 +80,7 @@ static const auto cell_margin_boost_per_row =
 // x_boost += i_pos / 4 * cell_margin / 2;
 // x_boost += i_pos / 8 * cell_margin / 2;
 
-static const auto page_byte_size = 4096ul;
+static const auto page_byte_size = 1ul << 12;
 
 static const auto page_width = 64 * cell_offset + cell_margin_boost_per_row;
 static const auto page_height = 64 * cell_offset + cell_margin;
@@ -97,17 +99,22 @@ static const auto spacer_height = 5'000ul;
 
 /************************* /Drawing Constants ************************/
 
-void draw_page_cells(ul x, ul y, uint8_t *buf, size_t len) {
+void draw_page_cells(ul x, ul y, page_table_t *pt, active_page_notifier_t *pn) {
+  // TODO: remove these once in use
+  (void)pt;
+  (void)pn;
+
   static const auto zoom_threshold = 0.1f;
+
   if (get_zoom() < zoom_threshold)
     return;
 
-  // TODO: pregenerate fonts based on sizes
-  // Font font =
-  //     LoadFontEx("/usr/share/fonts/TTF/CaskaydiaMonoNerdFont-Regular.ttf",
-  //                font_size, NULL, 0);
+  // TODO: mark page as active
 
-  for (size_t i = 0; i < len; i++) {
+  // TODO: use monospaced font, possibly:
+  //       /usr/share/fonts/TTF/CaskaydiaMonoNerdFont-Regular.ttf
+
+  for (size_t i = 0; i < page_byte_size; i++) {
     auto x_boost = 0ul;
     auto i_pos = i % cells_per_line;
 
@@ -139,19 +146,22 @@ void draw_page_cells(ul x, ul y, uint8_t *buf, size_t len) {
     if (get_zoom() < zoom_threshold * 3)
       continue;
 
-    auto byte = buf[i];
-    char text[3];
-    snprintf(text, sizeof(text), "%02X", byte);
+    // TODO: draw cells from page data if possible, else draw placeholder cells
+
+    // auto byte = buf[i];
+    // char text[3];
+    // snprintf(text, sizeof(text), "%02X", byte);
 
     Vector2 text_pos = {
         (float)x_pos + (float)cell_width / 2,
         (float)y_pos + (float)cell_height / 2,
     };
-    draw_text_center(text, text_pos, (float)font_size, DARKGRAY);
+    draw_text_center("--", text_pos, (float)font_size, DARKGRAY);
   }
 }
 
-void draw_page(size_t page_num, uint8_t *buf, size_t len, ul y_cursor) {
+void draw_page(size_t page_num, page_table_t *pt, active_page_notifier_t *pn,
+               ul y_cursor) {
   auto x_pos =
       page_margin + (page_num % pages_per_row) * (page_width + page_margin);
   auto y_pos = y_cursor + page_margin +
@@ -169,10 +179,10 @@ void draw_page(size_t page_num, uint8_t *buf, size_t len, ul y_cursor) {
     return;
   draw_rect(rec, GRAY);
 
-  draw_page_cells(x_pos, y_pos, buf, len);
+  draw_page_cells(x_pos, y_pos, pt, pn);
 }
 
-ul draw_map(map_t *map, ul y_cursor) {
+ul draw_map(map_t *map, active_page_notifier_t *pn, ul y_cursor) {
   auto pages = map->len / page_byte_size;
   auto page_rows = pages / pages_per_row;
   if (pages % pages_per_row != 0) {
@@ -196,7 +206,7 @@ ul draw_map(map_t *map, ul y_cursor) {
   draw_rect(rec, DARKGRAY);
 
   for (size_t i = 0; i < pages; i++) {
-    draw_page(i, map->buf + i * page_byte_size, page_byte_size, y_cursor);
+    draw_page(i, map->root_pt, pn, y_cursor);
   }
 
   return ret;
@@ -219,20 +229,20 @@ ul draw_spacer(ul y_cursor) {
   return y_cursor + spacer_height + map_margin;
 }
 
-void draw_maps(map_registry_t *reg) {
+void draw_maps(map_registry_t *reg, active_page_notifier_t *pn) {
   pthread_mutex_lock(&reg->mu);
 
   auto prev = (map_t *)NULL;
   auto curr = reg->first;
-  auto cursor = 0ul;
+  auto y_cursor = 0ul;
 
   while (curr != NULL) {
     // diff prev addr with curr addr and draw a spacer
     if ((prev == NULL && curr->remote_addr != 0) ||
         (prev != NULL && (prev->remote_addr + prev->len) != curr->remote_addr))
-      cursor = draw_spacer(cursor);
+      y_cursor = draw_spacer(y_cursor);
 
-    cursor = draw_map(curr, cursor);
+    y_cursor = draw_map(curr, pn, y_cursor);
     prev = curr;
     curr = curr->next;
   }
@@ -276,7 +286,7 @@ void draw_debug_info() {
   draw_count = 2;
 }
 
-void draw_loop(map_registry_t *reg) {
+void draw_loop(map_registry_t *reg, active_page_notifier_t *pn) {
   frame_rate_start_time = now_seconds();
 
   while (!WindowShouldClose()) {
@@ -294,7 +304,7 @@ void draw_loop(map_registry_t *reg) {
 
     handle_input();
 
-    draw_maps(reg);
+    draw_maps(reg, pn);
 
     draw_debug_info();
 

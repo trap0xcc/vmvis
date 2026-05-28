@@ -1,11 +1,10 @@
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "raylib.h"
-
+#include "active_page_notifier.h"
 #include "args.h"
 #include "draw.h"
 #include "map.h"
+#include "page_monitor.h"
 #include "process.h"
 #include "window.h"
 
@@ -22,9 +21,12 @@ int main(int argc, char *argv[]) {
 
   start_map_monitor(&reg, &proc);
 
+  active_page_notifier_t pn = {};
+  start_page_monitor(&reg, &pn);
+
   create_window();
 
-  draw_loop(&reg);
+  draw_loop(&reg, &pn);
 
   destroy_window();
 

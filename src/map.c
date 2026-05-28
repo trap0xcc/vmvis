@@ -77,6 +77,10 @@ void start_map_monitor(map_registry_t *reg, process_t *proc) {
 void register_map(map_registry_t *reg, uintptr_t remote_addr, size_t len) {
   pthread_mutex_lock(&reg->mu);
 
+  // TODO: handle map insertions via mmap
+  // TODO: handle map deletions via munmap
+  // TODO: handle map resizes via mremap
+
   auto curr = &reg->first;
   auto curr_val = reg->first;
 
@@ -90,7 +94,6 @@ void register_map(map_registry_t *reg, uintptr_t remote_addr, size_t len) {
   }
 
   *curr = calloc(1, sizeof(map_t));
-  (*curr)->buf = calloc(1, len);
   (*curr)->len = len;
   (*curr)->remote_addr = remote_addr;
 
