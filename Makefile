@@ -1,4 +1,4 @@
-.PHONY: all clean run run.asan run.tsan run.ubsan
+.PHONY: all clean dev run run.asan run.tsan run.ubsan
 
 CC := clang
 DEBUG := -g
@@ -33,6 +33,8 @@ all: $(BINARIES)
 
 clean:
 	rm -rf build
+
+dev: run.tsan
 
 run: clean build/vmvis
 	build/vmvis $(ARGS)
