@@ -4,6 +4,7 @@ CC := clang
 DEBUG := -g
 WARNINGS := -Wall -Wextra -Wconversion -Wimplicit-int-float-conversion
 WARNINGS += -Wpedantic -Wshadow -Wstrict-prototypes -Wdouble-promotion
+WARNINGS += -Werror
 INCLUDES := -Iinclude
 STANDARD := -std=c23
 DEPENDENCIES := -MMD -MP

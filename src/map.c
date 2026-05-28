@@ -22,7 +22,7 @@ void update_maps_from_file(pid_t pid, map_registry_t *reg) {
     perror("snprintf in update_maps_from_file");
     exit(EXIT_FAILURE);
   }
-  if (n >= sizeof(file_path)) {
+  if (n >= (int)sizeof(file_path)) {
     fputs("snprintf trucation in update_maps_from_file\n", stderr);
     exit(EXIT_FAILURE);
   }
@@ -68,7 +68,7 @@ void *map_monitor(void *args) {
 }
 
 void start_map_monitor(map_registry_t *reg, process_t *proc) {
-  _map_monitor_args *args = malloc(sizeof(_map_monitor_args()));
+  _map_monitor_args *args = malloc(sizeof(_map_monitor_args));
   args->reg = reg;
   args->proc = proc;
   pthread_create(&reg->t, NULL, map_monitor, args);
