@@ -1,4 +1,4 @@
-.PHONY: all clean run
+.PHONY: all clean run run.asan run.tsan run.ubsan
 
 CC := clang
 DEBUG := -g
@@ -9,16 +9,19 @@ INCLUDES := -Iinclude
 STANDARD := -std=c23
 DEPENDENCIES := -MMD -MP
 OPTIMIZATIONS := -O0
-
+OTHER := -fno-omit-frame-pointer
 SAN ?= none
-SANS := -fsanitize=undefined -fno-omit-frame-pointer
+SANS :=
 ifeq ($(SAN),asan)
 	SANS += -fsanitize=address
-else
+	SANS += -fsanitize=undefined
+else ifeq ($(SAN),tsan)
 	SANS += -fsanitize=thread
+	SANS += -fsanitize=undefined
+else ifeq ($(SAN),ubsan)
+	SANS += -fsanitize=undefined
 endif
-
-CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES) $(SANS)
+CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES) $(OTHER) $(SANS)
 
 LDLIBS := -lraylib
 LDFLAGS := -fuse-ld=lld $(SANS)
@@ -31,8 +34,20 @@ all: $(BINARIES)
 clean:
 	rm -rf build
 
-run: build/vmvis
-	TSAN_OPTIONS="suppressions=tsan_ignore.txt" $<
+run: clean build/vmvis
+	build/vmvis
+
+run.tsan: clean
+	SAN=tsan make build/vmvis
+	TSAN_OPTIONS="suppressions=tsan_ignore.txt" build/vmvis
+
+run.asan: clean
+	SAN=asan make build/vmvis
+	build/vmvis
+
+run.ubsan: clean
+	SAN=ubsan make build/vmvis
+	build/vmvis
 
 build/%.o: src/%.c
 	mkdir -p $(@D)
