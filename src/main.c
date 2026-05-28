@@ -13,8 +13,6 @@ int main(int argc, char *argv[]) {
   args_t args = {};
   parse_args(argc, argv, &args);
 
-  SetConfigFlags(FLAG_MSAA_4X_HINT);
-
   map_registry_t reg = {};
   registry_init(&reg);
 
