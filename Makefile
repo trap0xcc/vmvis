@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean run
 
 CC := clang
 DEBUG := -g
@@ -9,7 +9,15 @@ INCLUDES := -Iinclude
 STANDARD := -std=c23
 DEPENDENCIES := -MMD -MP
 OPTIMIZATIONS := -O0
-SANS := -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
+
+SAN ?= none
+SANS := -fsanitize=undefined -fno-omit-frame-pointer
+ifeq ($(SAN),asan)
+	SANS += -fsanitize=address
+else
+	SANS += -fsanitize=thread
+endif
+
 CFLAGS := $(WARNINGS) $(INCLUDES) $(STANDARD) $(DEBUG) $(OPTIMIZATIONS) $(DEPENDENCIES) $(SANS)
 
 LDLIBS := -lraylib
@@ -22,6 +30,9 @@ all: $(BINARIES)
 
 clean:
 	rm -rf build
+
+run: build/vmvis
+	TSAN_OPTIONS="suppressions=tsan_ignore.txt" $<
 
 build/%.o: src/%.c
 	mkdir -p $(@D)

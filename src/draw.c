@@ -230,6 +230,7 @@ ul draw_spacer(ul y_cursor) {
 }
 
 void draw_maps(map_registry_t *reg, active_page_notifier_t *pn) {
+  // TODO: refactor this to not take the lock in this module
   pthread_mutex_lock(&reg->mu);
 
   auto prev = (map_t *)NULL;
