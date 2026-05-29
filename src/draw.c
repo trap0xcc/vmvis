@@ -9,10 +9,9 @@
 
 #include "draw.h"
 #include "input.h"
+#include "lang.h"
 #include "page_table.h"
 #include "relative.h"
-
-#define ul unsigned long
 
 static ul draw_count;
 
