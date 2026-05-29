@@ -1,10 +1,13 @@
+
 #ifndef _DRAW_H
 #define _DRAW_H
 
 #include "active_page_notifier.h"
+#include "debug.h"
 #include "map.h"
 
 void draw_loop(map_registry *reg, active_page_notifier *pn);
+void draw_debug_info(debug_info *di);
 
 /************************* Drawing Constants *************************/
 

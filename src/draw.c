@@ -211,21 +211,15 @@ void draw_maps(map_registry *reg, active_page_notifier *pn) {
   pthread_mutex_unlock(&reg->mu);
 }
 
-static auto global_frame_count = 0ul;
-static auto frame_count = 0ul;
-static double frame_rate_start_time;
-static double frame_rate;
-static ul draw_count;
-
-void draw_debug_info() {
+void draw_debug_info(debug_info *di) {
   char buf[1 << 12] = "";
 
   auto now = now_seconds();
-  auto time_delta = now - frame_rate_start_time;
+  auto time_delta = now - di->frame_rate_start_time;
   if (time_delta > 1) {
-    frame_rate = (double)frame_count / time_delta;
-    frame_count = 0;
-    frame_rate_start_time = now;
+    di->frame_rate = (double)di->frame_count / time_delta;
+    di->frame_count = 0;
+    di->frame_rate_start_time = now;
   }
 
   snprintf(buf, sizeof(buf),
@@ -233,7 +227,10 @@ void draw_debug_info() {
            "frame_rate: %f\n"
            "draw_count: %ld\n"
            "zoom: %f\n",
-           global_frame_count, frame_rate, draw_count, (double)get_zoom());
+           di->global_frame_count, di->frame_rate, draw_count,
+           (double)get_zoom());
+  // TODO: pull out draw counts into debug info
+  // TODO: report origin as well
 
   DrawText(buf, 24, 24, 20, DARKGRAY);
   DrawText(buf, 20, 20, 20, LIGHTGRAY);
@@ -242,13 +239,13 @@ void draw_debug_info() {
 }
 
 void draw_loop(map_registry *reg, active_page_notifier *pn) {
-  frame_rate_start_time = now_seconds();
+  debug_info di = {.frame_rate_start_time = now_seconds()};
 
   while (!WindowShouldClose()) {
     BeginDrawing();
 
     // NOTE: This translation can only be done after the first frame is drawn.
-    if (global_frame_count == 1) {
+    if (di.global_frame_count == 1) {
       set_origin((Vector2){
           .x = ((float)GetScreenWidth() - page_row_width * get_zoom()) / 2,
           .y = 200,
@@ -261,11 +258,11 @@ void draw_loop(map_registry *reg, active_page_notifier *pn) {
 
     draw_maps(reg, pn);
 
-    draw_debug_info();
+    draw_debug_info(&di);
 
     EndDrawing();
 
-    global_frame_count++;
-    frame_count++;
+    di.global_frame_count++;
+    di.frame_count++;
   }
 }
