@@ -1,8 +1,8 @@
 #include <stdlib.h>
 
 #include "active_page_notifier.h"
+#include "app.h"
 #include "args.h"
-#include "draw.h"
 #include "map.h"
 #include "page_monitor.h"
 #include "process.h"
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
   create_window();
 
-  draw_loop(&reg, &pn);
+  app_loop(&reg, &pn);
 
   destroy_window();
 

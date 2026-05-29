@@ -6,9 +6,6 @@
 #include "debug.h"
 #include "map.h"
 
-void draw_loop(map_registry *reg, active_page_notifier *pn);
-void draw_debug_info(debug_info *di);
-
 /************************* Drawing Constants *************************/
 
 // TODO: upper case these
@@ -41,5 +38,8 @@ static const auto map_width = page_row_width + 2 * map_padding;
 static const auto spacer_height = 5'000ul;
 
 /************************* /Drawing Constants ************************/
+
+void draw_maps(map_registry *reg, active_page_notifier *pn);
+void draw_debug_info(debug_info *di);
 
 #endif
