@@ -9,7 +9,7 @@ INCLUDES := -Iinclude
 STANDARD := -std=c23
 DEPENDENCIES := -MMD -MP
 OPTIMIZATIONS := -O0
-OTHER := -fno-omit-frame-pointer
+OTHER := -fno-omit-frame-pointer -flto
 SAN ?= none
 SANS :=
 ifeq ($(SAN),asan)
