@@ -19,18 +19,18 @@ void draw_rect(rect rec, Color color, space *s) {
   DrawRectangleRec(rect_to_raylib(rect_apply_space(rec, s)), color);
 }
 
-void draw_text_center(char *text, vec2 position, double _font_size, Color color,
+void draw_text_center(char *text, vec2 position, double font_size, Color color,
                       space *s) {
   position = vec_apply_space(position, s);
-  _font_size = font_size_apply_space(_font_size, s);
+  font_size = font_size_apply_space(font_size, s);
   auto font = GetFontDefault();
   double spacing = s->zoom;
   auto text_size = raylib_to_vec2(
-      MeasureTextEx(font, text, (float)_font_size, (float)spacing));
+      MeasureTextEx(font, text, (float)font_size, (float)spacing));
   position.x -= text_size.x / 2;
   position.y -= text_size.y / 2 - 1;
   draw_count++;
-  DrawTextEx(font, text, vec2_to_raylib(position), (float)_font_size,
+  DrawTextEx(font, text, vec2_to_raylib(position), (float)font_size,
              (float)spacing, color);
 }
 
@@ -65,21 +65,21 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
   // TODO: use monospaced font, possibly:
   //       /usr/share/fonts/TTF/CaskaydiaMonoNerdFont-Regular.ttf
 
-  for (size_t i = 0; i < page_byte_size; i++) {
+  for (size_t i = 0; i < PAGE_BYTE_SIZE; i++) {
     auto x_boost = 0ul;
-    auto i_pos = i % cells_per_line;
+    auto i_pos = i % CELLS_PER_LINE;
 
-    x_boost += i_pos / 4 * cell_margin / 2;
-    x_boost += i_pos / 8 * cell_margin / 2;
+    x_boost += i_pos / 4 * CELL_MARGIN / 2;
+    x_boost += i_pos / 8 * CELL_MARGIN / 2;
 
-    auto x_pos = cell_margin + i % cells_per_line * cell_offset + x + x_boost;
-    auto y_pos = cell_margin + i / cells_per_line * cell_offset + y;
+    auto x_pos = CELL_MARGIN + i % CELLS_PER_LINE * CELL_OFFSET + x + x_boost;
+    auto y_pos = CELL_MARGIN + i / CELLS_PER_LINE * CELL_OFFSET + y;
 
     rect rec = {
         .x = (double)x_pos,
         .y = (double)y_pos,
-        .width = (double)cell_width,
-        .height = (double)cell_height,
+        .width = (double)CELL_WIDTH,
+        .height = (double)CELL_HEIGHT,
     };
 
     if (!visible_rect(rec, s))
@@ -88,8 +88,8 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
     rect shadow_rec = {
         .x = (double)(x_pos + 3),
         .y = (double)(y_pos + 3),
-        .width = (double)cell_width,
-        .height = (double)cell_height,
+        .width = (double)CELL_WIDTH,
+        .height = (double)CELL_HEIGHT,
     };
     draw_rect(shadow_rec, BLACK, s);
     draw_rect(rec, LIGHTGRAY, s);
@@ -104,21 +104,21 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
     // snprintf(text, sizeof(text), "%02X", byte);
 
     vec2 text_pos = {
-        (double)x_pos + (double)cell_width / 2,
-        (double)y_pos + (double)cell_height / 2,
+        (double)x_pos + (double)CELL_WIDTH / 2,
+        (double)y_pos + (double)CELL_HEIGHT / 2,
     };
-    draw_text_center("--", text_pos, (double)font_size, DARKGRAY, s);
+    draw_text_center("--", text_pos, (double)FONT_SIZE, DARKGRAY, s);
   }
 }
 
 void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
                ul y_cursor, space *s) {
   auto x_pos =
-      page_margin + (page_num % pages_per_row) * (page_width + page_margin);
-  auto y_pos = y_cursor + page_margin +
-               (page_num / pages_per_row) * (page_height + page_margin);
-  auto width = page_width;
-  auto height = page_height;
+      PAGE_MARGIN + (page_num % PAGES_PER_ROW) * (PAGE_WIDTH + PAGE_MARGIN);
+  auto y_pos = y_cursor + PAGE_MARGIN +
+               (page_num / PAGES_PER_ROW) * (PAGE_HEIGHT + PAGE_MARGIN);
+  auto width = PAGE_WIDTH;
+  auto height = PAGE_HEIGHT;
 
   rect rec = {
       .x = (double)x_pos,
@@ -134,16 +134,16 @@ void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
 }
 
 ul draw_map(map *map, active_page_notifier *pn, ul y_cursor, space *s) {
-  auto pages = map->len / page_byte_size;
-  auto page_rows = pages / pages_per_row;
-  if (pages % pages_per_row != 0) {
+  auto pages = map->len / PAGE_BYTE_SIZE;
+  auto page_rows = pages / PAGES_PER_ROW;
+  if (pages % PAGES_PER_ROW != 0) {
     page_rows++;
   }
 
   auto x_pos = 0;
   auto y_pos = y_cursor;
-  auto width = map_width;
-  auto height = page_rows * (page_row_height + page_margin) + 2 * map_padding;
+  auto width = MAP_WIDTH;
+  auto height = page_rows * (PAGE_ROW_HEIGHT + PAGE_MARGIN) + 2 * MAP_PADDING;
 
   rect rec = {
       .x = (double)x_pos,
@@ -151,7 +151,7 @@ ul draw_map(map *map, active_page_notifier *pn, ul y_cursor, space *s) {
       .width = (double)width,
       .height = (double)height,
   };
-  auto ret = y_cursor + height + map_margin;
+  auto ret = y_cursor + height + MAP_MARGIN;
   if (!visible_rect(rec, s))
     return ret;
   draw_rect(rec, DARKGRAY, s);
@@ -166,8 +166,8 @@ ul draw_map(map *map, active_page_notifier *pn, ul y_cursor, space *s) {
 ul draw_spacer(ul y_cursor, space *s) {
   auto x_pos = 0;
   auto y_pos = y_cursor;
-  auto width = map_width;
-  auto height = spacer_height;
+  auto width = MAP_WIDTH;
+  auto height = SPACER_HEIGHT;
 
   rect rec = {
       .x = (double)x_pos,
@@ -177,7 +177,7 @@ ul draw_spacer(ul y_cursor, space *s) {
   };
   draw_rect(rec, LIGHTGRAY, s);
 
-  return y_cursor + spacer_height + map_margin;
+  return y_cursor + SPACER_HEIGHT + MAP_MARGIN;
 }
 
 void draw_maps(map_registry *reg, active_page_notifier *pn, space *s) {

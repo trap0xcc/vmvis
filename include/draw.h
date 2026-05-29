@@ -10,33 +10,33 @@
 /************************* Drawing Constants *************************/
 
 // TODO: upper case these
-static const auto cell_width = 50ul;
-static const auto cell_height = cell_width;
-static const auto cell_margin = 15ul;
-static const auto cell_offset = cell_width + cell_margin;
-static const auto cells_per_line = 64ul;
-static const auto font_size = cell_height / 8 * 5;
+static const auto CELL_WIDTH = 50ul;
+static const auto CELL_HEIGHT = CELL_WIDTH;
+static const auto CELL_MARGIN = 15ul;
+static const auto CELL_OFFSET = CELL_WIDTH + CELL_MARGIN;
+static const auto CELLS_PER_LINE = 64ul;
+static const auto FONT_SIZE = CELL_HEIGHT / 8 * 5;
 
-static const auto cell_margin_boost_per_row =
-    ((cells_per_line / 4) * cell_margin / 2) +
-    ((cells_per_line / 8) * cell_margin / 2);
+static const auto _CELL_MARGIN_BOOST_PER_ROW =
+    ((CELLS_PER_LINE / 4) * CELL_MARGIN / 2) +
+    ((CELLS_PER_LINE / 8) * CELL_MARGIN / 2);
 
-static const auto page_byte_size = 1ul << 12;
+static const auto PAGE_BYTE_SIZE = 1ul << 12;
 
-static const auto page_width = 64 * cell_offset + cell_margin_boost_per_row;
-static const auto page_height = 64 * cell_offset + cell_margin;
-static const auto page_margin = 100ul;
+static const auto PAGE_WIDTH = 64 * CELL_OFFSET + _CELL_MARGIN_BOOST_PER_ROW;
+static const auto PAGE_HEIGHT = 64 * CELL_OFFSET + CELL_MARGIN;
+static const auto PAGE_MARGIN = 100ul;
 
-static const auto pages_per_row = 8ul;
+static const auto PAGES_PER_ROW = 8ul;
 
-static const auto page_row_width = (page_width + page_margin) * pages_per_row;
-static const auto page_row_height = page_height;
+static const auto PAGE_ROW_WIDTH = (PAGE_WIDTH + PAGE_MARGIN) * PAGES_PER_ROW;
+static const auto PAGE_ROW_HEIGHT = PAGE_HEIGHT;
 
-static const auto map_margin = 500ul;
-static const auto map_padding = cell_width;
-static const auto map_width = page_row_width + 2 * map_padding;
+static const auto MAP_MARGIN = 500ul;
+static const auto MAP_PADDING = CELL_WIDTH;
+static const auto MAP_WIDTH = PAGE_ROW_WIDTH + 2 * MAP_PADDING;
 
-static const auto spacer_height = 5'000ul;
+static const auto SPACER_HEIGHT = 5'000ul;
 
 /************************* /Drawing Constants ************************/
 

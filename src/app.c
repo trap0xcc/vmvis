@@ -22,7 +22,7 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
     // NOTE: This translation can only be done after the first frame is drawn
     // since the screen width takes a while to be computed.
     if (di.global_frame_count == 1) {
-      s.origin.x = (GetScreenWidth() - page_row_width * s.zoom) / 2;
+      s.origin.x = (GetScreenWidth() - PAGE_ROW_WIDTH * s.zoom) / 2;
       s.origin.y = 200;
     }
 
