@@ -5,6 +5,7 @@
 #include "active_page_notifier.h"
 #include "debug.h"
 #include "map.h"
+#include "space.h"
 
 /************************* Drawing Constants *************************/
 
@@ -39,7 +40,7 @@ static const auto spacer_height = 5'000ul;
 
 /************************* /Drawing Constants ************************/
 
-void draw_maps(map_registry *reg, active_page_notifier *pn);
-void draw_debug_info(debug_info *di);
+void draw_maps(map_registry *reg, active_page_notifier *pn, space *s);
+void draw_debug_info(debug_info *di, space *s);
 
 #endif

@@ -6,67 +6,58 @@
 
 #include "raylib.h"
 
+#include "coords.h"
 #include "draw.h"
-#include "input.h"
 #include "lang.h"
 #include "page_table.h"
-#include "relative.h"
 #include "time_util.h"
 
 static ul draw_count;
 
-void draw_rect(Rectangle rec, Color color) {
+void draw_rect(rect rec, Color color, space *s) {
   draw_count++;
-  DrawRectangleRec(relative_rect_to_screen(rec), color);
+  DrawRectangleRec(rect_to_raylib(rect_apply_space(rec, s)), color);
 }
 
-void draw_text_center(char *text, Vector2 position, float _font_size,
-                      Color color) {
-  position = relative_vec_to_screen(position);
-  _font_size = relative_font_size_to_screen(_font_size);
+void draw_text_center(char *text, vec2 position, double _font_size, Color color,
+                      space *s) {
+  position = vec_apply_space(position, s);
+  _font_size = font_size_apply_space(_font_size, s);
   auto font = GetFontDefault();
-  float spacing = get_zoom();
-  auto text_size = MeasureTextEx(font, text, _font_size, spacing);
+  double spacing = s->zoom;
+  auto text_size = raylib_to_vec2(
+      MeasureTextEx(font, text, (float)_font_size, (float)spacing));
   position.x -= text_size.x / 2;
   position.y -= text_size.y / 2 - 1;
   draw_count++;
-  DrawTextEx(font, text, position, _font_size, spacing, color);
+  DrawTextEx(font, text, vec2_to_raylib(position), (float)_font_size,
+             (float)spacing, color);
 }
 
-void draw_line(Vector2 start, Vector2 end, float thick, Color color) {
-  draw_count++;
-  DrawLineEx(screen_vec_to_relative(start), screen_vec_to_relative(end), thick,
-             color);
-}
-
-void draw_line_direct(Vector2 start, Vector2 end, float thick, Color color) {
-  draw_count++;
-  DrawLineEx(start, end, thick, color);
-}
-
-bool directional_overlap_1d(float a_a, float a_b, float b_a, float b_b) {
+bool directional_overlap_1d(double a_a, double a_b, double b_a, double b_b) {
   return !(a_b < b_a || a_a > b_b);
 }
 
-bool visible_rect(Rectangle relative_rect) {
-  auto screen_rect = relative_rect_to_screen(relative_rect);
+bool visible_rect(rect relative_rect, space *s) {
+  auto screen_rect = rect_apply_space(relative_rect, s);
 
   return directional_overlap_1d(screen_rect.y,
                                 screen_rect.y + screen_rect.height, 0,
-                                (float)GetScreenHeight()) &&
+                                (double)GetScreenHeight()) &&
          directional_overlap_1d(screen_rect.x,
                                 screen_rect.x + screen_rect.width, 0,
-                                (float)GetScreenWidth());
+                                (double)GetScreenWidth());
 }
 
-void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn) {
+void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
+                     space *s) {
   // TODO: remove these once in use
   (void)pt;
   (void)pn;
 
-  static const auto zoom_threshold = 0.1f;
+  static const auto zoom_threshold = 0.1;
 
-  if (get_zoom() < zoom_threshold)
+  if (s->zoom < zoom_threshold)
     return;
 
   // TODO: mark page as active
@@ -84,26 +75,26 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn) {
     auto x_pos = cell_margin + i % cells_per_line * cell_offset + x + x_boost;
     auto y_pos = cell_margin + i / cells_per_line * cell_offset + y;
 
-    Rectangle rec = {
-        .x = (float)x_pos,
-        .y = (float)y_pos,
-        .width = (float)cell_width,
-        .height = (float)cell_height,
+    rect rec = {
+        .x = (double)x_pos,
+        .y = (double)y_pos,
+        .width = (double)cell_width,
+        .height = (double)cell_height,
     };
 
-    if (!visible_rect(rec))
+    if (!visible_rect(rec, s))
       continue;
 
-    Rectangle shadow_rec = {
-        .x = (float)(x_pos + 3),
-        .y = (float)(y_pos + 3),
-        .width = (float)cell_width,
-        .height = (float)cell_height,
+    rect shadow_rec = {
+        .x = (double)(x_pos + 3),
+        .y = (double)(y_pos + 3),
+        .width = (double)cell_width,
+        .height = (double)cell_height,
     };
-    draw_rect(shadow_rec, BLACK);
-    draw_rect(rec, LIGHTGRAY);
+    draw_rect(shadow_rec, BLACK, s);
+    draw_rect(rec, LIGHTGRAY, s);
 
-    if (get_zoom() < zoom_threshold * 3)
+    if (s->zoom < zoom_threshold * 3)
       continue;
 
     // TODO: draw cells from page data if possible, else draw placeholder cells
@@ -112,16 +103,16 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn) {
     // char text[3];
     // snprintf(text, sizeof(text), "%02X", byte);
 
-    Vector2 text_pos = {
-        (float)x_pos + (float)cell_width / 2,
-        (float)y_pos + (float)cell_height / 2,
+    vec2 text_pos = {
+        (double)x_pos + (double)cell_width / 2,
+        (double)y_pos + (double)cell_height / 2,
     };
-    draw_text_center("--", text_pos, (float)font_size, DARKGRAY);
+    draw_text_center("--", text_pos, (double)font_size, DARKGRAY, s);
   }
 }
 
 void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
-               ul y_cursor) {
+               ul y_cursor, space *s) {
   auto x_pos =
       page_margin + (page_num % pages_per_row) * (page_width + page_margin);
   auto y_pos = y_cursor + page_margin +
@@ -129,20 +120,20 @@ void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
   auto width = page_width;
   auto height = page_height;
 
-  Rectangle rec = {
-      .x = (float)x_pos,
-      .y = (float)y_pos,
-      .width = (float)width,
-      .height = (float)height,
+  rect rec = {
+      .x = (double)x_pos,
+      .y = (double)y_pos,
+      .width = (double)width,
+      .height = (double)height,
   };
-  if (!visible_rect(rec))
+  if (!visible_rect(rec, s))
     return;
-  draw_rect(rec, GRAY);
+  draw_rect(rec, GRAY, s);
 
-  draw_page_cells(x_pos, y_pos, pt, pn);
+  draw_page_cells(x_pos, y_pos, pt, pn, s);
 }
 
-ul draw_map(map *map, active_page_notifier *pn, ul y_cursor) {
+ul draw_map(map *map, active_page_notifier *pn, ul y_cursor, space *s) {
   auto pages = map->len / page_byte_size;
   auto page_rows = pages / pages_per_row;
   if (pages % pages_per_row != 0) {
@@ -154,42 +145,42 @@ ul draw_map(map *map, active_page_notifier *pn, ul y_cursor) {
   auto width = map_width;
   auto height = page_rows * (page_row_height + page_margin) + 2 * map_padding;
 
-  Rectangle rec = {
-      .x = (float)x_pos,
-      .y = (float)y_pos,
-      .width = (float)width,
-      .height = (float)height,
+  rect rec = {
+      .x = (double)x_pos,
+      .y = (double)y_pos,
+      .width = (double)width,
+      .height = (double)height,
   };
   auto ret = y_cursor + height + map_margin;
-  if (!visible_rect(rec))
+  if (!visible_rect(rec, s))
     return ret;
-  draw_rect(rec, DARKGRAY);
+  draw_rect(rec, DARKGRAY, s);
 
   for (size_t i = 0; i < pages; i++) {
-    draw_page(i, map->root_pt, pn, y_cursor);
+    draw_page(i, map->root_pt, pn, y_cursor, s);
   }
 
   return ret;
 }
 
-ul draw_spacer(ul y_cursor) {
+ul draw_spacer(ul y_cursor, space *s) {
   auto x_pos = 0;
   auto y_pos = y_cursor;
   auto width = map_width;
   auto height = spacer_height;
 
-  Rectangle rec = {
-      .x = (float)x_pos,
-      .y = (float)y_pos,
-      .width = (float)width,
-      .height = (float)height,
+  rect rec = {
+      .x = (double)x_pos,
+      .y = (double)y_pos,
+      .width = (double)width,
+      .height = (double)height,
   };
-  draw_rect(rec, LIGHTGRAY);
+  draw_rect(rec, LIGHTGRAY, s);
 
   return y_cursor + spacer_height + map_margin;
 }
 
-void draw_maps(map_registry *reg, active_page_notifier *pn) {
+void draw_maps(map_registry *reg, active_page_notifier *pn, space *s) {
   // TODO: refactor this to not take the lock in this module
   pthread_mutex_lock(&reg->mu);
 
@@ -201,9 +192,9 @@ void draw_maps(map_registry *reg, active_page_notifier *pn) {
     // diff prev addr with curr addr and draw a spacer
     if ((prev == NULL && curr->remote_addr != 0) ||
         (prev != NULL && (prev->remote_addr + prev->len) != curr->remote_addr))
-      y_cursor = draw_spacer(y_cursor);
+      y_cursor = draw_spacer(y_cursor, s);
 
-    y_cursor = draw_map(curr, pn, y_cursor);
+    y_cursor = draw_map(curr, pn, y_cursor, s);
     prev = curr;
     curr = curr->next;
   }
@@ -211,7 +202,7 @@ void draw_maps(map_registry *reg, active_page_notifier *pn) {
   pthread_mutex_unlock(&reg->mu);
 }
 
-void draw_debug_info(debug_info *di) {
+void draw_debug_info(debug_info *di, space *s) {
   char buf[1 << 12] = "";
 
   auto now = now_seconds();
@@ -227,8 +218,7 @@ void draw_debug_info(debug_info *di) {
            "frame_rate: %f\n"
            "draw_count: %ld\n"
            "zoom: %f\n",
-           di->global_frame_count, di->frame_rate, draw_count,
-           (double)get_zoom());
+           di->global_frame_count, di->frame_rate, draw_count, (double)s->zoom);
   // TODO: pull out draw counts into debug info
   // TODO: report origin as well
 

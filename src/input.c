@@ -1,45 +1,41 @@
 #include <stdlib.h>
 
+#include "coords.h"
 #include "raylib.h"
 
-#include "relative.h"
+#include "space.h"
 
-void handle_input_scroll() {
-  static const auto zoom_factor = 0.1f;
+void handle_input_scroll(space *s) {
+  static const auto zoom_factor = 0.1;
 
-  auto pos = GetMousePosition();
-  auto i_pos = screen_vec_to_relative(pos);
+  auto pos = raylib_to_vec2(GetMousePosition());
+  auto i_pos = vec_undo_space(pos, s);
 
   auto val = GetMouseWheelMove();
   if (val != 0) {
-    auto direction = (val < 0) ? 1 - zoom_factor : 1 + zoom_factor;
-    set_zoom(get_zoom() * direction);
+    s->zoom *= (val < 0) ? 1 - zoom_factor : 1 + zoom_factor;
 
-    auto new_pos = relative_vec_to_screen(i_pos);
+    auto new_pos = vec_apply_space(i_pos, s);
 
-    auto origin = get_origin();
-    set_origin((Vector2){
-        origin.x - new_pos.x + pos.x,
-        origin.y - new_pos.y + pos.y,
-    });
+    s->origin.x += -new_pos.x + pos.x;
+    s->origin.y += -new_pos.y + pos.y;
   }
 }
 
-void handle_input_pan() {
+void handle_input_pan(space *s) {
   // TODO: fix minor glitch when translating and zooming at the same time
-  static Vector2 pressed_pos;
-  static Vector2 pressed_origin;
+  // TODO: remove static state
+  static vec2 pressed_pos;
+  static vec2 pressed_origin;
 
-  auto mouse_pos = GetMousePosition();
+  auto mouse_pos = raylib_to_vec2(GetMousePosition());
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
     pressed_pos = mouse_pos;
-    pressed_origin = get_origin();
+    pressed_origin = s->origin;
   }
   if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-    set_origin((Vector2){
-        pressed_origin.x + mouse_pos.x - pressed_pos.x,
-        pressed_origin.y + mouse_pos.y - pressed_pos.y,
-    });
+    s->origin.x = pressed_origin.x + mouse_pos.x - pressed_pos.x;
+    s->origin.y = pressed_origin.y + mouse_pos.y - pressed_pos.y;
   }
 }
 
@@ -56,8 +52,8 @@ void handle_input_key_press() {
   }
 }
 
-void handle_input() {
-  handle_input_scroll();
-  handle_input_pan();
+void handle_input(space *s) {
+  handle_input_scroll(s);
+  handle_input_pan(s);
   handle_input_key_press();
 }

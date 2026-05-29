@@ -1,6 +1,8 @@
 #ifndef _INPUT_H
 #define _INPUT_H
 
-void handle_input();
+#include "space.h"
+
+void handle_input(space *s);
 
 #endif
