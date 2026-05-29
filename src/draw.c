@@ -184,14 +184,15 @@ void draw_maps(map_registry *reg, active_page_notifier *pn, space *s) {
   // TODO: refactor this to not take the lock in this module
   pthread_mutex_lock(&reg->mu);
 
-  auto prev = (map *)NULL;
+  auto prev = (map *)nullptr;
   auto curr = reg->first;
   auto y_cursor = 0ul;
 
-  while (curr != NULL) {
+  while (curr != nullptr) {
     // diff prev addr with curr addr and draw a spacer
-    if ((prev == NULL && curr->remote_addr != 0) ||
-        (prev != NULL && (prev->remote_addr + prev->len) != curr->remote_addr))
+    if ((prev == nullptr && curr->remote_addr != 0) ||
+        (prev != nullptr &&
+         (prev->remote_addr + prev->len) != curr->remote_addr))
       y_cursor = draw_spacer(y_cursor, s);
 
     y_cursor = draw_map(curr, pn, y_cursor, s);

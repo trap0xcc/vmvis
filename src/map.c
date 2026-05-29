@@ -7,7 +7,7 @@
 #include "map.h"
 #include "process.h"
 
-void registry_init(map_registry *reg) { pthread_mutex_init(&reg->mu, NULL); }
+void registry_init(map_registry *reg) { pthread_mutex_init(&reg->mu, nullptr); }
 
 void update_maps_from_file(pid_t pid, map_registry *reg) {
   if (!pid) {
@@ -28,7 +28,7 @@ void update_maps_from_file(pid_t pid, map_registry *reg) {
   }
 
   FILE *f = fopen(file_path, "r");
-  if (f == NULL) {
+  if (f == nullptr) {
     fprintf(stderr, "%s\n", file_path);
     perror("fopen in update_maps_from_file");
     exit(EXIT_FAILURE);
@@ -64,14 +64,14 @@ void *map_monitor(void *args) {
     sleep(2);
   }
 
-  return NULL;
+  return nullptr;
 }
 
 void start_map_monitor(map_registry *reg, process_info *pi) {
   _map_monitor_args *args = malloc(sizeof(_map_monitor_args));
   args->reg = reg;
   args->pi = pi;
-  pthread_create(&reg->t, NULL, map_monitor, args);
+  pthread_create(&reg->t, nullptr, map_monitor, args);
 }
 
 void register_map(map_registry *reg, uintptr_t remote_addr, size_t len) {
@@ -84,7 +84,7 @@ void register_map(map_registry *reg, uintptr_t remote_addr, size_t len) {
   auto curr = &reg->first;
   auto curr_val = reg->first;
 
-  while (curr_val != NULL) {
+  while (curr_val != nullptr) {
     // map already exists in list, just return
     if (curr_val->remote_addr == remote_addr)
       goto unlock;
