@@ -7,9 +7,8 @@
 
 #include "raylib.h"
 
-#include "active_page_notifier.h"
+#include "draw.h"
 #include "input.h"
-#include "map.h"
 #include "page_table.h"
 #include "relative.h"
 
@@ -22,17 +21,17 @@ void draw_rect(Rectangle rec, Color color) {
   DrawRectangleRec(relative_rect_to_screen(rec), color);
 }
 
-void draw_text_center(char *text, Vector2 position, float font_size,
+void draw_text_center(char *text, Vector2 position, float _font_size,
                       Color color) {
   position = relative_vec_to_screen(position);
-  font_size = relative_font_size_to_screen(font_size);
+  _font_size = relative_font_size_to_screen(_font_size);
   auto font = GetFontDefault();
   float spacing = get_zoom();
-  auto text_size = MeasureTextEx(font, text, font_size, spacing);
+  auto text_size = MeasureTextEx(font, text, _font_size, spacing);
   position.x -= text_size.x / 2;
   position.y -= text_size.y / 2 - 1;
   draw_count++;
-  DrawTextEx(font, text, position, font_size, spacing, color);
+  DrawTextEx(font, text, position, _font_size, spacing, color);
 }
 
 void draw_line(Vector2 start, Vector2 end, float thick, Color color) {
@@ -60,44 +59,6 @@ bool visible_rect(Rectangle relative_rect) {
                                 screen_rect.x + screen_rect.width, 0,
                                 (float)GetScreenWidth());
 }
-
-/************************* Drawing Constants *************************/
-
-static const auto cell_width = 50ul;
-static const auto cell_height = cell_width;
-static const auto cell_margin = 15ul;
-static const auto cell_offset = cell_width + cell_margin;
-static const auto cells_per_line = 64ul;
-static const auto font_size = cell_height / 8 * 5;
-
-static const auto cell_margin_boost_per_row =
-    ((cells_per_line / 4) * cell_margin / 2) +
-    ((cells_per_line / 8) * cell_margin / 2);
-// static const auto cell_margin_boost_per_row = 1.5 * cells_per_line *
-// cell_margin / 8;
-
-// auto i_pos = i % cells_per_line;
-// x_boost += i_pos / 4 * cell_margin / 2;
-// x_boost += i_pos / 8 * cell_margin / 2;
-
-static const auto page_byte_size = 1ul << 12;
-
-static const auto page_width = 64 * cell_offset + cell_margin_boost_per_row;
-static const auto page_height = 64 * cell_offset + cell_margin;
-static const auto page_margin = 100ul;
-
-static const auto pages_per_row = 8ul;
-
-static const auto page_row_width = (page_width + page_margin) * pages_per_row;
-static const auto page_row_height = page_height;
-
-static const auto map_margin = 500ul;
-static const auto map_padding = cell_width;
-static const auto map_width = page_row_width + 2 * map_padding;
-
-static const auto spacer_height = 5'000ul;
-
-/************************* /Drawing Constants ************************/
 
 void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn) {
   // TODO: remove these once in use
