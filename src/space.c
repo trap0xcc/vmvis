@@ -4,6 +4,9 @@
 void space_relative_init(space *s) { s->zoom = 0.005; }
 
 vec2 vec_apply_space(vec2 v, space *s) {
+  if (s == nullptr)
+    return v;
+
   // scale
   v.x *= s->zoom;
   v.y *= s->zoom;
@@ -16,6 +19,9 @@ vec2 vec_apply_space(vec2 v, space *s) {
 }
 
 vec2 vec_undo_space(vec2 v, space *s) {
+  if (s == nullptr)
+    return v;
+
   // translate
   v.x -= s->origin.x;
   v.y -= s->origin.y;
@@ -28,6 +34,9 @@ vec2 vec_undo_space(vec2 v, space *s) {
 }
 
 rect rect_apply_space(rect r, space *s) {
+  if (s == nullptr)
+    return r;
+
   // scale
   r.x *= s->zoom;
   r.y *= s->zoom;
@@ -41,6 +50,9 @@ rect rect_apply_space(rect r, space *s) {
   return r;
 }
 
-double font_size_apply_space(double font_size, space *s) {
-  return font_size * s->zoom;
+double double_apply_space(double d, space *s) {
+  if (s == nullptr)
+    return d;
+
+  return d * s->zoom;
 }

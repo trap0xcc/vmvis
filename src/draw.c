@@ -22,7 +22,7 @@ void draw_rect(rect rec, Color color, space *s) {
 void draw_text_center(char *text, vec2 position, double font_size, Color color,
                       space *s) {
   position = vec_apply_space(position, s);
-  font_size = font_size_apply_space(font_size, s);
+  font_size = double_apply_space(font_size, s);
   auto font = GetFontDefault();
   double spacing = s->zoom;
   auto text_size = raylib_to_vec2(
