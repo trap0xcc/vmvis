@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "raylib.h"
@@ -12,6 +11,7 @@
 #include "lang.h"
 #include "page_table.h"
 #include "relative.h"
+#include "time_util.h"
 
 static ul draw_count;
 
@@ -209,12 +209,6 @@ void draw_maps(map_registry *reg, active_page_notifier *pn) {
   }
 
   pthread_mutex_unlock(&reg->mu);
-}
-
-static inline double now_seconds(void) {
-  struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
 }
 
 static auto global_frame_count = 0ul;
