@@ -1,3 +1,5 @@
+#ifndef _RELATIVE_H
+#define _RELATIVE_H
 
 #include "raylib.h"
 
@@ -10,3 +12,5 @@ Vector2 relative_vec_to_screen(Vector2 vec);
 Vector2 screen_vec_to_relative(Vector2 vec);
 Rectangle relative_rect_to_screen(Rectangle rect);
 float relative_font_size_to_screen(float font_size);
+
+#endif
