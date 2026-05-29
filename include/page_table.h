@@ -4,6 +4,6 @@
 
 typedef struct {
   int TODO;
-} page_table_t;
+} page_table;
 
 #endif

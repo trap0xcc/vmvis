@@ -11,6 +11,6 @@
 
 DEFINE_PRINTER_HEADER(Rectangle)
 
-void register_test_maps(map_registry_t *reg);
+void register_test_maps(map_registry *reg);
 
 #endif

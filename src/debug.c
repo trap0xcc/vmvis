@@ -20,7 +20,7 @@
 
 DEFINE_PRINTER(Rectangle, RECTANGLE_FIELDS)
 
-void register_test_maps(map_registry_t *reg) {
+void register_test_maps(map_registry *reg) {
   register_map(reg, 4096, 1 << 20);
   register_map(reg, 2 << 20, 1 << 20);
   register_map(reg, 3 << 20, 1 << 20);

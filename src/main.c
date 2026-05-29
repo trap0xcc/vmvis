@@ -9,19 +9,19 @@
 #include "window.h"
 
 int main(int argc, char *argv[]) {
-  args_t args = {};
+  args args = {};
   parse_args(argc, argv, &args);
 
-  map_registry_t reg = {};
+  map_registry reg = {};
   registry_init(&reg);
 
-  process_t proc = {};
-  process_init(&proc);
-  proc.pid = args.pid;
+  process_info pi = {};
+  process_init(&pi);
+  pi.pid = args.pid;
 
-  start_map_monitor(&reg, &proc);
+  start_map_monitor(&reg, &pi);
 
-  active_page_notifier_t pn = {};
+  active_page_notifier pn = {};
   start_page_monitor(&reg, &pn);
 
   create_window();

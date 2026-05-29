@@ -13,20 +13,20 @@ typedef struct map {
   uintptr_t remote_addr;
   size_t len;
   struct map *next;
-  page_table_t *root_pt;
-} map_t;
+  page_table *root_pt;
+} map;
 
 typedef struct {
   pthread_mutex_t mu;
-  map_t *first;
+  map *first;
   pthread_t t;
-} map_registry_t;
+} map_registry;
 
-void registry_init(map_registry_t *reg);
+void registry_init(map_registry *reg);
 
 // TODO: split out map monitor
-void start_map_monitor(map_registry_t *reg, process_t *proc);
+void start_map_monitor(map_registry *reg, process_info *pi);
 
-void register_map(map_registry_t *reg, uintptr_t remote_addr, size_t len);
+void register_map(map_registry *reg, uintptr_t remote_addr, size_t len);
 
 #endif

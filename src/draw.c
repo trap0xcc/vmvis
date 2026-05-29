@@ -99,7 +99,7 @@ static const auto spacer_height = 5'000ul;
 
 /************************* /Drawing Constants ************************/
 
-void draw_page_cells(ul x, ul y, page_table_t *pt, active_page_notifier_t *pn) {
+void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn) {
   // TODO: remove these once in use
   (void)pt;
   (void)pn;
@@ -160,7 +160,7 @@ void draw_page_cells(ul x, ul y, page_table_t *pt, active_page_notifier_t *pn) {
   }
 }
 
-void draw_page(size_t page_num, page_table_t *pt, active_page_notifier_t *pn,
+void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
                ul y_cursor) {
   auto x_pos =
       page_margin + (page_num % pages_per_row) * (page_width + page_margin);
@@ -182,7 +182,7 @@ void draw_page(size_t page_num, page_table_t *pt, active_page_notifier_t *pn,
   draw_page_cells(x_pos, y_pos, pt, pn);
 }
 
-ul draw_map(map_t *map, active_page_notifier_t *pn, ul y_cursor) {
+ul draw_map(map *map, active_page_notifier *pn, ul y_cursor) {
   auto pages = map->len / page_byte_size;
   auto page_rows = pages / pages_per_row;
   if (pages % pages_per_row != 0) {
@@ -229,11 +229,11 @@ ul draw_spacer(ul y_cursor) {
   return y_cursor + spacer_height + map_margin;
 }
 
-void draw_maps(map_registry_t *reg, active_page_notifier_t *pn) {
+void draw_maps(map_registry *reg, active_page_notifier *pn) {
   // TODO: refactor this to not take the lock in this module
   pthread_mutex_lock(&reg->mu);
 
-  auto prev = (map_t *)NULL;
+  auto prev = (map *)NULL;
   auto curr = reg->first;
   auto y_cursor = 0ul;
 
@@ -287,7 +287,7 @@ void draw_debug_info() {
   draw_count = 2;
 }
 
-void draw_loop(map_registry_t *reg, active_page_notifier_t *pn) {
+void draw_loop(map_registry *reg, active_page_notifier *pn) {
   frame_rate_start_time = now_seconds();
 
   while (!WindowShouldClose()) {

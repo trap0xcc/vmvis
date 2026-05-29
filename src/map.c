@@ -7,9 +7,9 @@
 #include "map.h"
 #include "process.h"
 
-void registry_init(map_registry_t *reg) { pthread_mutex_init(&reg->mu, NULL); }
+void registry_init(map_registry *reg) { pthread_mutex_init(&reg->mu, NULL); }
 
-void update_maps_from_file(pid_t pid, map_registry_t *reg) {
+void update_maps_from_file(pid_t pid, map_registry *reg) {
   if (!pid) {
     fputs("pid is zero, registering test maps\n", stderr);
     register_test_maps(reg);
@@ -49,15 +49,15 @@ void update_maps_from_file(pid_t pid, map_registry_t *reg) {
 }
 
 typedef struct {
-  map_registry_t *reg;
-  process_t *proc;
+  map_registry *reg;
+  process_info *pi;
 } _map_monitor_args;
 
 void *map_monitor(void *args) {
-  map_registry_t *reg = ((_map_monitor_args *)args)->reg;
-  process_t *proc = ((_map_monitor_args *)args)->proc;
+  map_registry *reg = ((_map_monitor_args *)args)->reg;
+  process_info *pi = ((_map_monitor_args *)args)->pi;
 
-  auto pid = process_get_pid(proc);
+  auto pid = process_get_pid(pi);
 
   for (;;) {
     update_maps_from_file(pid, reg);
@@ -67,14 +67,14 @@ void *map_monitor(void *args) {
   return NULL;
 }
 
-void start_map_monitor(map_registry_t *reg, process_t *proc) {
+void start_map_monitor(map_registry *reg, process_info *pi) {
   _map_monitor_args *args = malloc(sizeof(_map_monitor_args));
   args->reg = reg;
-  args->proc = proc;
+  args->pi = pi;
   pthread_create(&reg->t, NULL, map_monitor, args);
 }
 
-void register_map(map_registry_t *reg, uintptr_t remote_addr, size_t len) {
+void register_map(map_registry *reg, uintptr_t remote_addr, size_t len) {
   pthread_mutex_lock(&reg->mu);
 
   // TODO: handle map insertions via mmap
@@ -93,7 +93,7 @@ void register_map(map_registry_t *reg, uintptr_t remote_addr, size_t len) {
     curr_val = curr_val->next;
   }
 
-  *curr = calloc(1, sizeof(map_t));
+  *curr = calloc(1, sizeof(map));
   (*curr)->len = len;
   (*curr)->remote_addr = remote_addr;
 

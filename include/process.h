@@ -8,9 +8,9 @@
 typedef struct {
   pthread_mutex_t mu;
   pid_t pid;
-} process_t;
+} process_info;
 
-void process_init(process_t *proc);
-pid_t process_get_pid(process_t *proc);
+void process_init(process_info *pi);
+pid_t process_get_pid(process_info *pi);
 
 #endif
