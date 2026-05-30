@@ -43,6 +43,10 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
 
     di.global_frame_count++;
     di.frame_count++;
-    di.total_map_size = registry_stats(reg).total_size;
+    auto stats = registry_stats(reg);
+    di.map_reg_byte_size = stats.byte_size;
+    di.map_reg_len = stats.len;
+    di.map_reg_page_size = stats.page_size;
+    di.draw_count = 0;
   }
 }

@@ -178,9 +178,8 @@ typedef struct {
 void _draw_map_visitor(map *map, void *userdata) {
   _draw_map_visitor_userdata *ud = userdata;
 
-  if ((ud->prev == nullptr && map->remote_addr != 0) ||
-      (ud->prev != nullptr &&
-       (ud->prev->remote_addr + ud->prev->len) != map->remote_addr))
+  if ((ud->prev == nullptr && map->start != 0) ||
+      (ud->prev != nullptr && ud->prev->end != map->start))
     ud->y_cursor = draw_spacer(ud->y_cursor, ud->s, ud->rdp);
 
   ud->y_cursor = draw_map(map, ud->pt, ud->pn, ud->y_cursor, ud->s, ud->rdp);

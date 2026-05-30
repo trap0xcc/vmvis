@@ -12,7 +12,9 @@ typedef struct {
   double frame_rate_start_time;
   double frame_rate;
   ul draw_count;
-  ul total_map_size;
+  ul map_reg_len;
+  ul map_reg_byte_size;
+  ul map_reg_page_size;
 } debug_info;
 
 void debug_info_str(char *buf, size_t len, debug_info *di, space *s);

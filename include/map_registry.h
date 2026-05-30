@@ -18,7 +18,9 @@ typedef struct map_registry_entry {
 } map_registry_entry;
 
 typedef struct {
-  ul total_size;
+  ul len;
+  ul byte_size;
+  ul page_size;
 } reg_stats;
 
 typedef void (*map_registy_visit_fn)(map *map, void *userdata);

@@ -1,11 +1,81 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
-#include "lang.h"
+#include <inttypes.h>
+#include <stdint.h>
+
+#include "draw.h"
+#include "map.h"
 #include "map_registry.h"
 #include "process.h"
+
+void parse_range(const char *s, map *map) {
+  sscanf(s, "%" SCNxPTR "-%" SCNxPTR, &map->start, &map->end);
+  map->len = map->end - map->start;
+  map->pages = map->len / PAGE_BYTE_SIZE;
+}
+
+void parse_prot_flags(const char *s, map *map) {
+  if (s[0] == 'r')
+    map->prot |= PROT_READ;
+  if (s[1] == 'w')
+    map->prot |= PROT_WRITE;
+  if (s[2] == 'x')
+    map->prot |= PROT_EXEC;
+  if (s[3] == 's')
+    map->flags |= MAP_SHARED;
+  if (s[3] == 'p')
+    map->flags |= MAP_PRIVATE;
+}
+
+void parse_dev(const char *s, map *map) {
+  sscanf(s, "%x:%x", &map->dev_major, &map->dev_minor);
+}
+
+map parse_line(const char *line) {
+  map map = {};
+
+  // make a writable copy since we may split it
+  char *tmp = strdup(line);
+  if (!tmp)
+    exit(1);
+
+  // find pathname start (first non-fixed field after 5 tokens)
+  // format:
+  //   addr prot offset dev inode [pathname...]
+  char *addr = strtok(tmp, " ");
+  char *prot = strtok(NULL, " ");
+  char *offset = strtok(NULL, " ");
+  char *dev = strtok(NULL, " ");
+  char *inode = strtok(NULL, " ");
+
+  if (addr)
+    parse_range(addr, &map);
+  if (prot)
+    parse_prot_flags(prot, &map);
+  if (offset)
+    map.offset = strtoull(offset, NULL, 16);
+  if (dev)
+    parse_dev(dev, &map);
+  if (inode)
+    map.inode = atoi(inode);
+
+  // Remaining text (if any) is pathname
+  char *rest = strtok(NULL, "");
+  if (rest) {
+    while (*rest == ' ')
+      rest++;
+    if (*rest)
+      map.path = strdup(rest);
+  }
+
+  free(tmp);
+  return map;
+}
 
 void update_maps_from_file(pid_t pid, map_registry *reg) {
   if (!pid) {
@@ -26,23 +96,15 @@ void update_maps_from_file(pid_t pid, map_registry *reg) {
   }
 
   FILE *f = fopen(file_path, "r");
-  if (f == nullptr) {
+  if (!f) {
     fprintf(stderr, "%s\n", file_path);
     perror("fopen in update_maps_from_file");
     exit(EXIT_FAILURE);
   }
 
-  ul start, end, offset;
-  char perms[5];
-  char path[256];
-
-  while (fscanf(f, "%lx-%lx %4s %lx %*s %*d %255[^\n]\n", &start, &end, perms,
-                &offset, path) >= 4) {
-    // printf("start: %p, end: %p, perms: %s, offset: %lx, path: %s\n",
-    //        (void *)start, (void *)end, perms, offset, path);
-
-    // TODO: use offset, perms, and path
-    register_map(reg, (map){.remote_addr = start, .len = end - start});
+  char line[1 << 10];
+  while (fgets(line, sizeof(line), f)) {
+    register_map(reg, parse_line(line));
   }
 }
 
