@@ -13,8 +13,7 @@
 #include "time_util.h"
 
 void app_loop(map_registry *reg, active_page_notifier *pn) {
-  space s = {};
-  space_relative_init(&s);
+  space s = space_relative_default;
 
   debug_info di = {.frame_rate_start_time = now_seconds()};
   raylib_draw_proxy rdp = {.di = &di};

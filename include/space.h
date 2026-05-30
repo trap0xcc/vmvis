@@ -11,6 +11,8 @@ typedef struct {
   double zoom;
 } space;
 
+extern const space space_relative_default;
+
 void space_relative_init(space *s);
 vec2 vec_apply_space(vec2 v, space *s);
 vec2 vec_undo_space(vec2 v, space *s);

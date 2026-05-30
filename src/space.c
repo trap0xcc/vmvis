@@ -1,7 +1,7 @@
 
 #include "space.h"
 
-void space_relative_init(space *s) { s->zoom = 0.005; }
+const space space_relative_default = {.zoom = 0.005};
 
 vec2 vec_apply_space(vec2 v, space *s) {
   if (s == nullptr)
