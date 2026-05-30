@@ -48,18 +48,18 @@ bool visible_rect_const_size_right_aligned(rect rect, vec2 offset, space *s) {
                                 (double)GetScreenWidth());
 }
 
-void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
-                     space *s, raylib_draw_proxy *rdp) {
+void draw_page_cells(ul x, ul y, page_table *pt, space *s,
+                     raylib_draw_proxy *rdp, page_ids *page_ids,
+                     page_id page_id) {
   // TODO: remove these once in use
   (void)pt;
-  (void)pn;
 
   static const auto zoom_threshold = 0.1;
 
   if (s->zoom < zoom_threshold)
     return;
 
-  // TODO: mark page as active
+  page_ids_add(page_ids, page_id);
 
   // TODO: use monospaced font, possibly:
   //       /usr/share/fonts/TTF/CaskaydiaMonoNerdFont-Regular.ttf
@@ -110,8 +110,8 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
   }
 }
 
-void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
-               ul y_cursor, space *s, raylib_draw_proxy *rdp,
+void draw_page(size_t page_num, page_table *pt, page_ids *page_ids,
+               page_id page_id, ul y_cursor, space *s, raylib_draw_proxy *rdp,
                ul pages_per_row) {
   auto x_pos =
       PAGE_MARGIN + (page_num % pages_per_row) * (PAGE_WIDTH + PAGE_MARGIN);
@@ -130,10 +130,10 @@ void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
     return;
   draw_rect(rdp, rec, GRAY, s);
 
-  draw_page_cells(x_pos, y_pos, pt, pn, s, rdp);
+  draw_page_cells(x_pos, y_pos, pt, s, rdp, page_ids, page_id);
 }
 
-ul draw_map(map *map, page_table *pt, active_page_notifier *pn, ul y_cursor,
+ul draw_map(map *map, page_table *pt, active_page_notifier *apn, ul y_cursor,
             space *s, raylib_draw_proxy *rdp) {
   auto pages = map->len / PAGE_BYTE_SIZE;
   auto pages_per_row = PAGES_PER_ROW;
@@ -259,16 +259,23 @@ draw_map_rect:
         .width = (double)width,
         .height = (double)height,
     };
+    // if map isn't visible, stop all work
     if (!visible_rect(rect, s))
       goto ret;
     draw_rect(rdp, rect, DARKGRAY, s);
   }
 
-  if (s->zoom < 0.002)
-    goto ret;
-  // draw pages
-  for (size_t i = 0; i < pages; i++) {
-    draw_page(i, pt, pn, y_cursor, s, rdp, pages_per_row);
+  {
+    // skip drawing pages if we are zoomed out
+    if (s->zoom < 0.002)
+      goto ret;
+
+    // draw pages
+    auto p_ids = calloc(1, sizeof(page_ids));
+    for (size_t i = 0; i < pages; i++)
+      draw_page(i, pt, p_ids, page_id_from_map(map, i), y_cursor, s, rdp,
+                pages_per_row);
+    active_page_notifier_notify(apn, p_ids);
   }
 
 ret:
@@ -297,7 +304,7 @@ typedef struct {
   ul y_cursor;
 
   page_table *pt;
-  active_page_notifier *pn;
+  active_page_notifier *apn;
   space *s;
   raylib_draw_proxy *rdp;
 } _draw_map_visitor_userdata;
@@ -309,16 +316,16 @@ void _draw_map_visitor(map *map, void *userdata) {
       (ud->prev != nullptr && ud->prev->end != map->start))
     ud->y_cursor = draw_spacer(ud->y_cursor, ud->s, ud->rdp);
 
-  ud->y_cursor = draw_map(map, ud->pt, ud->pn, ud->y_cursor, ud->s, ud->rdp);
+  ud->y_cursor = draw_map(map, ud->pt, ud->apn, ud->y_cursor, ud->s, ud->rdp);
 
   ud->prev = map;
 }
 
-void draw_maps(map_registry *reg, page_table *pt, active_page_notifier *pn,
+void draw_maps(map_registry *reg, page_table *pt, active_page_notifier *apn,
                space *s, raylib_draw_proxy *rdp) {
   _draw_map_visitor_userdata ud = {
       .pt = pt,
-      .pn = pn,
+      .apn = apn,
       .s = s,
       .rdp = rdp,
   };
