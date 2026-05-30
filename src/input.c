@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "coords.h"
+#include "input.h"
 #include "raylib.h"
 
 #include "space.h"
@@ -22,20 +22,17 @@ void handle_input_scroll(space *s) {
   }
 }
 
-void handle_input_pan(space *s) {
+void handle_input_pan(space *s, input_state *is) {
   // TODO: fix minor glitch when translating and zooming at the same time
-  // TODO: remove static state
-  static vec2 pressed_pos;
-  static vec2 pressed_origin;
 
   auto mouse_pos = raylib_to_vec2(GetMousePosition());
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-    pressed_pos = mouse_pos;
-    pressed_origin = s->origin;
+    is->pressed_pos = mouse_pos;
+    is->pressed_origin = s->origin;
   }
   if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-    s->origin.x = pressed_origin.x + mouse_pos.x - pressed_pos.x;
-    s->origin.y = pressed_origin.y + mouse_pos.y - pressed_pos.y;
+    s->origin.x = is->pressed_origin.x + mouse_pos.x - is->pressed_pos.x;
+    s->origin.y = is->pressed_origin.y + mouse_pos.y - is->pressed_pos.y;
   }
 }
 
@@ -52,8 +49,8 @@ void handle_input_key_press() {
   }
 }
 
-void handle_input(space *s) {
+void handle_input(space *s, input_state *is) {
   handle_input_scroll(s);
-  handle_input_pan(s);
+  handle_input_pan(s, is);
   handle_input_key_press();
 }

@@ -11,7 +11,6 @@
 
 /************************* Drawing Constants *************************/
 
-// TODO: upper case these
 static const auto CELL_WIDTH = 50ul;
 static const auto CELL_HEIGHT = CELL_WIDTH;
 static const auto CELL_MARGIN = 15ul;

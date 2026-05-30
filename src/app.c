@@ -20,6 +20,7 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
   raylib_draw_proxy rdp = {.di = &di};
 
   page_table pt = {};
+  input_state is = {};
 
   while (!WindowShouldClose()) {
     BeginDrawing();
@@ -33,7 +34,7 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
 
     ClearBackground(BLACK);
 
-    handle_input(&s);
+    handle_input(&s, &is);
 
     draw_maps(reg, &pt, pn, &s, &rdp);
     draw_debug_info(&di, &s, &rdp);
