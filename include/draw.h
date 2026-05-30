@@ -4,7 +4,8 @@
 
 #include "active_page_notifier.h"
 #include "debug.h"
-#include "map.h"
+#include "map_registry.h"
+#include "page_table.h"
 #include "raylib_draw_proxy.h"
 #include "space.h"
 
@@ -41,8 +42,8 @@ static const auto SPACER_HEIGHT = 5'000ul;
 
 /************************* /Drawing Constants ************************/
 
-void draw_maps(map_registry *reg, active_page_notifier *pn, space *s,
-               raylib_draw_proxy *rdp);
+void draw_maps(map_registry *reg, page_table *pt, active_page_notifier *pn,
+               space *s, raylib_draw_proxy *rdp);
 void draw_debug_info(debug_info *di, space *s, raylib_draw_proxy *rdp);
 
 #endif

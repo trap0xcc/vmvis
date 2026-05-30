@@ -5,10 +5,8 @@
 
 #include "debug.h"
 #include "lang.h"
-#include "map.h"
+#include "map_registry.h"
 #include "process.h"
-
-void registry_init(map_registry *reg) { pthread_mutex_init(&reg->mu, nullptr); }
 
 void update_maps_from_file(pid_t pid, map_registry *reg) {
   if (!pid) {
@@ -45,7 +43,7 @@ void update_maps_from_file(pid_t pid, map_registry *reg) {
     //        (void *)start, (void *)end, perms, offset, path);
 
     // TODO: use offset, perms, and path
-    register_map(reg, start, end - start);
+    register_map(reg, (map){.remote_addr = start, .len = end - start});
   }
 }
 
@@ -73,31 +71,4 @@ void start_map_monitor(map_registry *reg, process_info *pi) {
   args->reg = reg;
   args->pi = pi;
   pthread_create(&reg->t, nullptr, map_monitor, args);
-}
-
-void register_map(map_registry *reg, uintptr_t remote_addr, size_t len) {
-  pthread_mutex_lock(&reg->mu);
-
-  // TODO: handle map insertions via mmap
-  // TODO: handle map deletions via munmap
-  // TODO: handle map resizes via mremap
-
-  auto curr = &reg->first;
-  auto curr_val = reg->first;
-
-  while (curr_val != nullptr) {
-    // map already exists in list, just return
-    if (curr_val->remote_addr == remote_addr)
-      goto unlock;
-
-    curr = &curr_val->next;
-    curr_val = curr_val->next;
-  }
-
-  *curr = calloc(1, sizeof(map));
-  (*curr)->len = len;
-  (*curr)->remote_addr = remote_addr;
-
-unlock:
-  pthread_mutex_unlock(&reg->mu);
 }

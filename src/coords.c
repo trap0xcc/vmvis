@@ -1,4 +1,3 @@
-
 #include "coords.h"
 
 Vector2 vec2_to_raylib(vec2 v) {

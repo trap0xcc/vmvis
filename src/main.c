@@ -3,7 +3,7 @@
 #include "active_page_notifier.h"
 #include "app.h"
 #include "args.h"
-#include "map.h"
+#include "map_monitor.h"
 #include "page_monitor.h"
 #include "process.h"
 #include "window.h"

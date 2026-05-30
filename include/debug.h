@@ -1,11 +1,10 @@
-
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
 #include <stdio.h>
 
 #include "lang.h"
-#include "map.h"
+#include "map_registry.h"
 
 #define DEFINE_PRINTER_HEADER(Type) void Type##_print(const Type *v);
 

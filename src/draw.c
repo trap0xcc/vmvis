@@ -6,10 +6,10 @@
 
 #include "raylib.h"
 
+#include "active_page_notifier.h"
 #include "coords.h"
 #include "draw.h"
 #include "lang.h"
-#include "page_table.h"
 #include "raylib_draw_proxy.h"
 #include "time_util.h"
 
@@ -112,8 +112,8 @@ void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
   draw_page_cells(x_pos, y_pos, pt, pn, s, rdp);
 }
 
-ul draw_map(map *map, active_page_notifier *pn, ul y_cursor, space *s,
-            raylib_draw_proxy *rdp) {
+ul draw_map(map *map, page_table *pt, active_page_notifier *pn, ul y_cursor,
+            space *s, raylib_draw_proxy *rdp) {
   auto pages = map->len / PAGE_BYTE_SIZE;
   auto page_rows = pages / PAGES_PER_ROW;
   if (pages % PAGES_PER_ROW != 0) {
@@ -137,7 +137,7 @@ ul draw_map(map *map, active_page_notifier *pn, ul y_cursor, space *s,
   draw_rect(rdp, rec, DARKGRAY, s);
 
   for (size_t i = 0; i < pages; i++) {
-    draw_page(i, map->root_pt, pn, y_cursor, s, rdp);
+    draw_page(i, pt, pn, y_cursor, s, rdp);
   }
 
   return ret;
@@ -160,28 +160,38 @@ ul draw_spacer(ul y_cursor, space *s, raylib_draw_proxy *rdp) {
   return y_cursor + SPACER_HEIGHT + MAP_MARGIN;
 }
 
-void draw_maps(map_registry *reg, active_page_notifier *pn, space *s,
-               raylib_draw_proxy *rdp) {
-  // TODO: refactor this to not take the lock in this module
-  pthread_mutex_lock(&reg->mu);
+typedef struct {
+  map *prev;
+  ul y_cursor;
 
-  auto prev = (map *)nullptr;
-  auto curr = reg->first;
-  auto y_cursor = 0ul;
+  page_table *pt;
+  active_page_notifier *pn;
+  space *s;
+  raylib_draw_proxy *rdp;
+} _draw_map_visitor_userdata;
 
-  while (curr != nullptr) {
-    // diff prev addr with curr addr and draw a spacer
-    if ((prev == nullptr && curr->remote_addr != 0) ||
-        (prev != nullptr &&
-         (prev->remote_addr + prev->len) != curr->remote_addr))
-      y_cursor = draw_spacer(y_cursor, s, rdp);
+void _draw_map_visitor(map *map, void *userdata) {
+  _draw_map_visitor_userdata *ud = userdata;
 
-    y_cursor = draw_map(curr, pn, y_cursor, s, rdp);
-    prev = curr;
-    curr = curr->next;
-  }
+  if ((ud->prev == nullptr && map->remote_addr != 0) ||
+      (ud->prev != nullptr &&
+       (ud->prev->remote_addr + ud->prev->len) != map->remote_addr))
+    ud->y_cursor = draw_spacer(ud->y_cursor, ud->s, ud->rdp);
 
-  pthread_mutex_unlock(&reg->mu);
+  ud->y_cursor = draw_map(map, ud->pt, ud->pn, ud->y_cursor, ud->s, ud->rdp);
+
+  ud->prev = map;
+}
+
+void draw_maps(map_registry *reg, page_table *pt, active_page_notifier *pn,
+               space *s, raylib_draw_proxy *rdp) {
+  _draw_map_visitor_userdata ud = {
+      .pt = pt,
+      .pn = pn,
+      .s = s,
+      .rdp = rdp,
+  };
+  registry_visit(reg, _draw_map_visitor, &ud);
 }
 
 void draw_debug_info(debug_info *di, space *s, raylib_draw_proxy *rdp) {

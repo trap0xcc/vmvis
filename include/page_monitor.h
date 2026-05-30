@@ -2,7 +2,7 @@
 #define _PAGE_MONITOR_H
 
 #include "active_page_notifier.h"
-#include "map.h"
+#include "map_registry.h"
 
 void start_page_monitor(map_registry *reg, active_page_notifier *pn);
 
