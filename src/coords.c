@@ -30,3 +30,17 @@ rect raylib_to_rect(Rectangle r) {
       .height = (double)r.height,
   };
 }
+
+#define VEC2_FIELDS(X, obj)                                                    \
+  X(x, double, "%f", obj)                                                      \
+  X(y, double, "%f", obj)
+
+DEFINE_PRINTER(vec2, VEC2_FIELDS)
+
+#define RECT_FIELDS(X, obj)                                                    \
+  X(x, double, "%f", obj)                                                      \
+  X(y, double, "%f", obj)                                                      \
+  X(width, double, "%f", obj)                                                  \
+  X(height, double, "%f", obj)
+
+DEFINE_PRINTER(rect, RECT_FIELDS)

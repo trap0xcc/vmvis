@@ -3,6 +3,8 @@
 
 #include <raylib.h>
 
+#include "debug.h"
+
 typedef struct {
   double x;
   double y;
@@ -19,5 +21,8 @@ Vector2 vec2_to_raylib(vec2 v);
 Rectangle rect_to_raylib(rect r);
 vec2 raylib_to_vec2(Vector2 v);
 rect raylib_to_rect(Rectangle r);
+
+DEFINE_PRINTER_HEADER(vec2)
+DEFINE_PRINTER_HEADER(rect)
 
 #endif
