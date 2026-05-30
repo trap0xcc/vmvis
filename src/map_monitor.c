@@ -67,10 +67,14 @@ map parse_line(const char *line) {
   // Remaining text (if any) is pathname
   char *rest = strtok(NULL, "");
   if (rest) {
-    while (*rest == ' ')
-      rest++;
-    if (*rest)
-      map.path = strdup(rest);
+    size_t len = strlen(rest);
+    if (len > 1) {
+      rest[len - 1] = '\0';
+      while (*rest == ' ')
+        rest++;
+      if (*rest)
+        map.path = strdup(rest);
+    }
   }
 
   free(tmp);

@@ -23,12 +23,12 @@ void registry_swap_maps(map_registry *reg, map_registry_entry *mre) {
   pthread_mutex_unlock(&reg->mu);
 }
 
+// NOTE: this function is just for test maps, use registry_swap_maps instead.
+//       this function does not correctly handle map insertions via runtime
+//       calls to mmap (it always places them at the end of the collection).
+//       this function does not handle map resizes via mremap.
 void register_map(map_registry *reg, map map) {
   pthread_mutex_lock(&reg->mu);
-
-  // TODO: handle map insertions via mmap
-  // TODO: handle map deletions via munmap
-  // TODO: handle map resizes via mremap
 
   auto curr = &reg->first;
   auto curr_val = reg->first;

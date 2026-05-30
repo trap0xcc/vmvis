@@ -1,8 +1,11 @@
 #define _DEFAULT_SOURCE
+#include <libgen.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "raylib.h"
@@ -20,6 +23,22 @@ bool directional_overlap_1d(double a_a, double a_b, double b_a, double b_b) {
 
 bool visible_rect(rect relative_rect, space *s) {
   auto screen_rect = rect_apply_space(relative_rect, s);
+
+  return directional_overlap_1d(screen_rect.y,
+                                screen_rect.y + screen_rect.height, 0,
+                                (double)GetScreenHeight()) &&
+         directional_overlap_1d(screen_rect.x,
+                                screen_rect.x + screen_rect.width, 0,
+                                (double)GetScreenWidth());
+}
+
+bool visible_rect_const_size_right_aligned(rect rect, vec2 offset, space *s) {
+  auto screen_rect = rect_apply_space(rect, s);
+  screen_rect.width = rect.width;
+  screen_rect.height = rect.height;
+  screen_rect.x -= screen_rect.width;
+  screen_rect.x += offset.x;
+  screen_rect.y += offset.y;
 
   return directional_overlap_1d(screen_rect.y,
                                 screen_rect.y + screen_rect.height, 0,
@@ -130,22 +149,130 @@ ul draw_map(map *map, page_table *pt, active_page_notifier *pn, ul y_cursor,
   auto width = MAP_WIDTH / PAGES_PER_ROW * pages_per_row;
   auto height = page_rows * (PAGE_ROW_HEIGHT + PAGE_MARGIN) + 2 * MAP_PADDING;
 
-  rect rec = {
-      .x = (double)x_pos,
-      .y = (double)y_pos,
-      .width = (double)width,
-      .height = (double)height,
-  };
-  auto ret = y_cursor + height + MAP_MARGIN;
-  if (!visible_rect(rec, s))
-    return ret;
-  draw_rect(rdp, rec, DARKGRAY, s);
+  // draw map info panel
+  {
+    static const auto INFO_PANEL_COLOR = LIGHTGRAY;
+    static const auto INFO_PANEL_BGCOLOR = BLACK;
+    static const auto INFO_PANEL_TEXT_SPACING = 2;
+    static const auto INFO_PANEL_TEXT_PADDING = 10;
+    static const auto INFO_PANEL_TEXT_SIZE = 20;
 
+    rect rect = {
+        .x = (double)x_pos,
+        .y = (double)y_pos,
+        .width = (double)400,
+        .height = (double)200,
+    };
+    auto rect_offset = (vec2){
+        .x = -(double)INFO_PANEL_TEXT_PADDING / 2,
+        .y = -(double)INFO_PANEL_TEXT_PADDING / 2,
+    };
+    if (!visible_rect_const_size_right_aligned(rect, rect_offset, s))
+      goto draw_map_rect;
+    draw_rect_const_size_right_aligned(rdp, rect, rect_offset,
+                                       INFO_PANEL_BGCOLOR, s);
+
+    auto name = (map->path && strlen(map->path)) ? map->path : nullptr;
+    auto position = (vec2){
+        .x = (double)x_pos,
+        .y = (double)y_pos,
+    };
+    auto offset = (vec2){
+        .x = -INFO_PANEL_TEXT_PADDING,
+    };
+    if (name) {
+      draw_text_const_size_right_aligned(
+          rdp, name, position, offset, INFO_PANEL_TEXT_SIZE,
+          INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+      if (s->zoom < 0.01)
+        goto draw_map_rect;
+    }
+
+    char buf[1 << 8] = {};
+    snprintf(buf, sizeof(buf), "0x%lx-0x%lx", map->start, map->end);
+    if (name)
+      offset.y += INFO_PANEL_TEXT_SIZE;
+    draw_text_const_size_right_aligned(
+        rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+        INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+    if (!name && s->zoom < 0.01)
+      goto draw_map_rect;
+
+    snprintf(buf, sizeof(buf), "len: 0x%lx", map->len);
+    offset.y += INFO_PANEL_TEXT_SIZE;
+    draw_text_const_size_right_aligned(
+        rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+        INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+
+    if (map->offset) {
+      snprintf(buf, sizeof(buf), "offset: 0x%lx", map->offset);
+      offset.y += INFO_PANEL_TEXT_SIZE;
+      draw_text_const_size_right_aligned(
+          rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+          INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+    }
+
+    snprintf(buf, sizeof(buf), "pages: %'ld", map->pages);
+    offset.y += INFO_PANEL_TEXT_SIZE;
+    draw_text_const_size_right_aligned(
+        rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+        INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+
+    auto read_str = (map->prot & PROT_READ) ? "READ | " : "";
+    auto write_str = (map->prot & PROT_WRITE) ? "WRITE | " : "";
+    auto exec_str = (map->prot & PROT_EXEC) ? "EXEC | " : "";
+    auto shared_str = (map->flags & MAP_SHARED) ? "SHARED | " : "";
+    auto private_str = (map->flags & MAP_PRIVATE) ? "PRIVATE | " : "";
+    snprintf(buf, sizeof(buf), "%s%s%s%s%s", read_str, write_str, exec_str,
+             shared_str, private_str);
+    auto len = strlen(buf);
+    if (len) {
+      buf[len - 3] = '\0';
+      offset.y += INFO_PANEL_TEXT_SIZE;
+      draw_text_const_size_right_aligned(
+          rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+          INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+    }
+
+    if (map->inode) {
+      snprintf(buf, sizeof(buf), "dev: %2d:%2d", map->dev_major,
+               map->dev_minor);
+      offset.y += INFO_PANEL_TEXT_SIZE;
+      draw_text_const_size_right_aligned(
+          rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+          INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+
+      snprintf(buf, sizeof(buf), "inode: %'d", map->inode);
+      offset.y += INFO_PANEL_TEXT_SIZE;
+      draw_text_const_size_right_aligned(
+          rdp, buf, position, offset, INFO_PANEL_TEXT_SIZE,
+          INFO_PANEL_TEXT_SPACING, INFO_PANEL_COLOR, s);
+    }
+  }
+
+draw_map_rect:
+  // draw map rect
+  {
+    rect rect = {
+        .x = (double)x_pos,
+        .y = (double)y_pos,
+        .width = (double)width,
+        .height = (double)height,
+    };
+    if (!visible_rect(rect, s))
+      goto ret;
+    draw_rect(rdp, rect, DARKGRAY, s);
+  }
+
+  if (s->zoom < 0.002)
+    goto ret;
+  // draw pages
   for (size_t i = 0; i < pages; i++) {
     draw_page(i, pt, pn, y_cursor, s, rdp, pages_per_row);
   }
 
-  return ret;
+ret:
+  return y_cursor + height + MAP_MARGIN;
 }
 
 ul draw_spacer(ul y_cursor, space *s, raylib_draw_proxy *rdp) {
