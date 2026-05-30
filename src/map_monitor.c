@@ -79,6 +79,7 @@ map parse_line(const char *line) {
 
 void update_maps_from_file(pid_t pid, map_registry *reg) {
   if (!pid) {
+    // TODO: eventually create a UI to allow user to select pid
     fputs("pid is zero, registering test maps\n", stderr);
     register_test_maps(reg);
     return;
@@ -103,9 +104,18 @@ void update_maps_from_file(pid_t pid, map_registry *reg) {
   }
 
   char line[1 << 10];
+  map_registry_entry *root_mre = {};
+  map_registry_entry **prev_mre = {};
   while (fgets(line, sizeof(line), f)) {
-    register_map(reg, parse_line(line));
+    map_registry_entry *mre = calloc(1, sizeof(map_registry_entry));
+    mre->map = parse_line(line);
+    if (!root_mre)
+      root_mre = mre;
+    if (prev_mre)
+      *prev_mre = mre;
+    prev_mre = &mre->next;
   }
+  registry_swap_maps(reg, root_mre);
 }
 
 typedef struct {

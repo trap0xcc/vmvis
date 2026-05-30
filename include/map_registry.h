@@ -26,6 +26,7 @@ typedef struct {
 typedef void (*map_registy_visit_fn)(map *map, void *userdata);
 
 void registry_init(map_registry *reg);
+void registry_swap_maps(map_registry *reg, map_registry_entry *mre);
 void register_map(map_registry *reg, map map);
 void registry_visit(map_registry *reg, map_registy_visit_fn fn, void *userdata);
 reg_stats registry_stats(map_registry *reg);

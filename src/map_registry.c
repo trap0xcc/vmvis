@@ -6,6 +6,23 @@
 
 void registry_init(map_registry *reg) { pthread_mutex_init(&reg->mu, nullptr); }
 
+void registry_swap_maps(map_registry *reg, map_registry_entry *mre) {
+  pthread_mutex_lock(&reg->mu);
+
+  auto curr = reg->first;
+
+  while (curr) {
+    auto next = curr->next;
+    map_destroy(curr->map);
+    free(curr);
+    curr = next;
+  }
+
+  reg->first = mre;
+
+  pthread_mutex_unlock(&reg->mu);
+}
+
 void register_map(map_registry *reg, map map) {
   pthread_mutex_lock(&reg->mu);
 
@@ -16,7 +33,7 @@ void register_map(map_registry *reg, map map) {
   auto curr = &reg->first;
   auto curr_val = reg->first;
 
-  while (curr_val != nullptr) {
+  while (curr_val) {
     // map already exists in list, just return
     if (curr_val->map.start == map.start)
       goto unlock;
@@ -38,7 +55,7 @@ void registry_visit(map_registry *reg, map_registy_visit_fn fn,
 
   auto curr = reg->first;
 
-  while (curr != nullptr) {
+  while (curr) {
     fn(&curr->map, userdata);
     curr = curr->next;
   }
@@ -53,7 +70,7 @@ reg_stats registry_stats(map_registry *reg) {
 
   auto curr = reg->first;
 
-  while (curr != nullptr) {
+  while (curr) {
     rs.len++;
     rs.byte_size += curr->map.len;
     rs.page_size += curr->map.pages;
