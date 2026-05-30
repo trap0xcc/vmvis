@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "debug.h"
 #include "lang.h"
 #include "map_registry.h"
 #include "process.h"

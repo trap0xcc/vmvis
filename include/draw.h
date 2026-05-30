@@ -3,7 +3,7 @@
 #define _DRAW_H
 
 #include "active_page_notifier.h"
-#include "debug.h"
+#include "debug_info.h"
 #include "map_registry.h"
 #include "page_table.h"
 #include "raylib_draw_proxy.h"

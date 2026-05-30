@@ -4,7 +4,7 @@
 #include <raylib.h>
 
 #include "app.h"
-#include "debug.h"
+#include "debug_info.h"
 #include "draw.h"
 #include "input.h"
 #include "page_table.h"
@@ -43,5 +43,6 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
 
     di.global_frame_count++;
     di.frame_count++;
+    di.total_map_size = registry_stats(reg).total_size;
   }
 }

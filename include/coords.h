@@ -3,7 +3,7 @@
 
 #include <raylib.h>
 
-#include "debug.h"
+#include "debug_print_macros.h"
 
 typedef struct {
   double x;

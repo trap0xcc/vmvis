@@ -2,7 +2,7 @@
 #define _RAYLIB_DRAW_PROXY
 
 #include "coords.h"
-#include "debug.h"
+#include "debug_info.h"
 #include "space.h"
 
 typedef struct {

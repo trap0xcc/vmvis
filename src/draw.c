@@ -1,4 +1,5 @@
 #define _DEFAULT_SOURCE
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,11 +92,12 @@ void draw_page_cells(ul x, ul y, page_table *pt, active_page_notifier *pn,
 }
 
 void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
-               ul y_cursor, space *s, raylib_draw_proxy *rdp) {
+               ul y_cursor, space *s, raylib_draw_proxy *rdp,
+               ul pages_per_row) {
   auto x_pos =
-      PAGE_MARGIN + (page_num % PAGES_PER_ROW) * (PAGE_WIDTH + PAGE_MARGIN);
+      PAGE_MARGIN + (page_num % pages_per_row) * (PAGE_WIDTH + PAGE_MARGIN);
   auto y_pos = y_cursor + PAGE_MARGIN +
-               (page_num / PAGES_PER_ROW) * (PAGE_HEIGHT + PAGE_MARGIN);
+               (page_num / pages_per_row) * (PAGE_HEIGHT + PAGE_MARGIN);
   auto width = PAGE_WIDTH;
   auto height = PAGE_HEIGHT;
 
@@ -115,14 +117,17 @@ void draw_page(size_t page_num, page_table *pt, active_page_notifier *pn,
 ul draw_map(map *map, page_table *pt, active_page_notifier *pn, ul y_cursor,
             space *s, raylib_draw_proxy *rdp) {
   auto pages = map->len / PAGE_BYTE_SIZE;
-  auto page_rows = pages / PAGES_PER_ROW;
-  if (pages % PAGES_PER_ROW != 0) {
+  auto pages_per_row = PAGES_PER_ROW;
+  if (pages > 1 << 10)
+    pages_per_row = (ul)sqrt((double)pages);
+  auto page_rows = pages / pages_per_row;
+  if (pages % pages_per_row != 0)
     page_rows++;
-  }
 
   auto x_pos = 0;
   auto y_pos = y_cursor;
-  auto width = MAP_WIDTH;
+  // TODO: clean this up once you make map sizing more dynamic vs consts
+  auto width = MAP_WIDTH / PAGES_PER_ROW * pages_per_row;
   auto height = page_rows * (PAGE_ROW_HEIGHT + PAGE_MARGIN) + 2 * MAP_PADDING;
 
   rect rec = {
@@ -137,7 +142,7 @@ ul draw_map(map *map, page_table *pt, active_page_notifier *pn, ul y_cursor,
   draw_rect(rdp, rec, DARKGRAY, s);
 
   for (size_t i = 0; i < pages; i++) {
-    draw_page(i, pt, pn, y_cursor, s, rdp);
+    draw_page(i, pt, pn, y_cursor, s, rdp, pages_per_row);
   }
 
   return ret;
@@ -205,14 +210,7 @@ void draw_debug_info(debug_info *di, space *s, raylib_draw_proxy *rdp) {
     di->frame_rate_start_time = now;
   }
 
-  snprintf(buf, sizeof(buf),
-           "global_frame_count: %ld\n"
-           "frame_rate: %f\n"
-           "draw_count: %ld\n"
-           "zoom: %f\n"
-           "origin: (%f, %f)\n",
-           di->global_frame_count, di->frame_rate, di->draw_count, s->zoom,
-           s->origin.x, s->origin.y);
+  debug_info_str(buf, sizeof(buf), di, s);
 
   draw_text(rdp, buf, (vec2){24, 24}, 20, 1, DARKGRAY, nullptr);
   draw_text(rdp, buf, (vec2){20, 20}, 20, 1, LIGHTGRAY, nullptr);

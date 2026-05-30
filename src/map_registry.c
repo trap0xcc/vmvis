@@ -44,3 +44,26 @@ void registry_visit(map_registry *reg, map_registy_visit_fn fn,
 
   pthread_mutex_unlock(&reg->mu);
 }
+
+reg_stats registry_stats(map_registry *reg) {
+  reg_stats rs = {};
+
+  pthread_mutex_lock(&reg->mu);
+
+  auto curr = reg->first;
+
+  while (curr != nullptr) {
+    rs.total_size += curr->map.len;
+    curr = curr->next;
+  }
+
+  pthread_mutex_unlock(&reg->mu);
+
+  return rs;
+}
+
+void register_test_maps(map_registry *reg) {
+  register_map(reg, (map){4096, 1 << 20});
+  register_map(reg, (map){2 << 20, 1 << 20});
+  register_map(reg, (map){3 << 20, 1 << 20});
+}
