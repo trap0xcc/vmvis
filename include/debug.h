@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 
+#include "lang.h"
 #include "map.h"
 
 #define DEFINE_PRINTER_HEADER(Type) void Type##_print(const Type *v);
@@ -19,11 +20,11 @@
   printf("  " #name " = " fmt "\n", (type)((obj)->name));
 
 typedef struct {
-  unsigned long global_frame_count;
-  unsigned long frame_count;
+  ul global_frame_count;
+  ul frame_count;
   double frame_rate_start_time;
   double frame_rate;
-  unsigned long draw_count;
+  ul draw_count;
 } debug_info;
 
 void register_test_maps(map_registry *reg);

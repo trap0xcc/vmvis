@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "debug.h"
+#include "lang.h"
 #include "map.h"
 #include "process.h"
 
@@ -34,7 +35,7 @@ void update_maps_from_file(pid_t pid, map_registry *reg) {
     exit(EXIT_FAILURE);
   }
 
-  unsigned long start, end, offset;
+  ul start, end, offset;
   char perms[5];
   char path[256];
 
