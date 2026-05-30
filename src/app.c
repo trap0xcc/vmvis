@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "draw.h"
 #include "input.h"
+#include "raylib_draw_proxy.h"
 #include "space.h"
 #include "time_util.h"
 
@@ -15,6 +16,7 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
   space_relative_init(&s);
 
   debug_info di = {.frame_rate_start_time = now_seconds()};
+  raylib_draw_proxy rdp = {.di = &di};
 
   while (!WindowShouldClose()) {
     BeginDrawing();
@@ -30,9 +32,8 @@ void app_loop(map_registry *reg, active_page_notifier *pn) {
 
     handle_input(&s);
 
-    draw_maps(reg, pn, &s);
-
-    draw_debug_info(&di, &s);
+    draw_maps(reg, pn, &s, &rdp);
+    draw_debug_info(&di, &s, &rdp);
 
     EndDrawing();
 
